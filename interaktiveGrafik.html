@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frauenspuren – Timeline Dornbirn</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Libre Baskerville','Georgia',serif;background:#faf8f5;color:#2a2420;min-height:100vh}
+.header{padding:32px 28px 20px;border-bottom:1px solid #e0d9d0}
+.header .kicker{font-family:'Source Sans 3',sans-serif;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#a09488;margin-bottom:6px}
+.header h1{font-size:26px;font-weight:700;line-height:1.2;margin-bottom:4px}
+.header .sub{font-family:'Source Sans 3',sans-serif;font-size:13px;color:#8a7e72;line-height:1.4}
+.filters{padding:14px 28px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid #e0d9d0;background:#f7f4f0}
+.cat-btn{border:1.5px solid #c8bfb4;background:#faf8f5;padding:5px 12px;border-radius:20px;cursor:pointer;font-size:11px;font-family:'Source Sans 3',sans-serif;font-weight:600;transition:all .2s;letter-spacing:.3px;white-space:nowrap}
+.cat-btn:hover{border-color:#8a7e72}
+.cat-btn.active{background:#2a2420;color:#faf8f5;border-color:#2a2420}
+.scroll-wrap{overflow-x:auto;overflow-y:visible;padding:0 0 40px}
+.scroll-wrap::-webkit-scrollbar{height:8px}
+.scroll-wrap::-webkit-scrollbar-thumb{background:#c8bfb4;border-radius:4px}
+.timeline-area{position:relative;padding:60px 28px 20px 220px;min-width:950px}
+.grid-line{position:absolute;top:0;bottom:0;width:1px;background:repeating-linear-gradient(to bottom,#e0d9d0 0px,#e0d9d0 3px,transparent 3px,transparent 7px);opacity:.7}
+.year-label{position:absolute;top:-22px;font-size:9px;font-family:'Source Sans 3',sans-serif;color:#a09488;transform:translateX(-50%);font-weight:600}
+.hist-marker{position:absolute;top:0;bottom:0;border-left:1.5px dashed #c8a080;opacity:.5;z-index:1}
+.hist-label{position:absolute;top:-44px;font-size:8px;font-family:'Source Sans 3',sans-serif;color:#b09070;transform:rotate(-35deg) translateX(-10px);transform-origin:bottom left;white-space:nowrap;font-weight:600;letter-spacing:.3px}
+.person-row{position:absolute;left:0;right:0;height:36px;display:flex;align-items:center}
+.life-bar{position:absolute;height:14px;border-radius:7px;cursor:pointer;transition:all .25s ease;opacity:.85}
+.life-bar:hover,.life-bar.highlight{opacity:1;height:20px;margin-top:-3px;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+.person-label{position:absolute;right:101%;white-space:nowrap;font-size:10.5px;font-family:'Source Sans 3',sans-serif;font-weight:600;color:#5a5048;padding-right:8px;line-height:14px;transition:color .2s;pointer-events:none}
+.life-bar:hover .person-label,.life-bar.highlight .person-label{color:#2a2420;font-weight:700}
+.event-dot{position:absolute;width:6px;height:6px;border-radius:50%;background:#fff;border:1.5px solid currentColor;top:50%;transform:translate(-50%,-50%);transition:all .2s;pointer-events:none}
+.life-bar:hover .event-dot{width:9px;height:9px}
+.arrow{position:absolute;right:-6px;top:50%;transform:translateY(-50%);font-size:10px;pointer-events:none}
+.legend{padding:16px 28px;border-top:1px solid #e0d9d0;background:#f7f4f0;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.legend-title{font-family:'Source Sans 3',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#a09488}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-swatch{width:20px;height:8px;border-radius:4px}
+.legend-text{font-family:'Source Sans 3',sans-serif;font-size:10.5px;color:#6a5e52}
+.detail-overlay{position:fixed;inset:0;background:rgba(42,36,32,.15);z-index:99;animation:fadeIn .2s ease}
+.detail-panel{position:fixed;top:0;right:0;width:380px;max-width:90vw;height:100vh;background:#faf8f5;border-left:1px solid #e0d9d0;box-shadow:-8px 0 30px rgba(0,0,0,.08);z-index:100;overflow-y:auto;padding:32px 28px;animation:slideIn .3s ease}
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.detail-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:#a09488;line-height:1}
+.detail-close:hover{color:#2a2420}
+.detail-cat{display:inline-block;padding:3px 10px;border-radius:12px;font-family:'Source Sans 3',sans-serif;font-size:10px;font-weight:700;letter-spacing:.5px;margin-bottom:12px}
+.detail-name{font-size:22px;margin-bottom:2px;line-height:1.3;font-weight:700}
+.detail-geb{font-family:'Source Sans 3',sans-serif;font-size:12px;color:#a09488;margin-bottom:8px}
+.detail-years{font-family:'Source Sans 3',sans-serif;font-size:15px;font-weight:600;color:#5a5048;margin-bottom:16px}
+.detail-desc{font-size:14px;line-height:1.7;color:#4a4038;margin-bottom:24px}
+.detail-events-title{font-family:'Source Sans 3',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#a09488;margin-bottom:12px}
+.detail-event{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start}
+.detail-event-year{font-family:'Source Sans 3',sans-serif;font-size:13px;font-weight:700;min-width:36px}
+.detail-event-text{font-family:'Source Sans 3',sans-serif;font-size:13px;color:#5a5048;line-height:1.5}
+.tooltip{position:fixed;background:#2a2420;color:#faf8f5;font-family:'Source Sans 3',sans-serif;font-size:11px;padding:6px 10px;border-radius:6px;pointer-events:none;z-index:50;max-width:260px;line-height:1.4;box-shadow:0 4px 12px rgba(0,0,0,.2);display:none}
+@media(max-width:600px){.header h1{font-size:20px}.timeline-area{padding-left:140px}.person-label{font-size:9px}.detail-panel{width:100vw}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="kicker">Frauenspuren</div>
+  <h1>Ein anderer Blick auf Dornbirns Geschichte</h1>
+  <p class="sub" id="subtitle"></p>
+</div>
+
+<div class="filters" id="filters"></div>
+
+<div class="scroll-wrap">
+  <div class="timeline-area" id="timeline"></div>
+</div>
+
+<div class="legend" id="legend"></div>
+
+<div id="detailOverlay" class="detail-overlay" style="display:none"></div>
+<div id="detailPanel" class="detail-panel" style="display:none"></div>
+<div id="tooltip" class="tooltip"></div>
+
+<script>
+const CATEGORIES = {
+  bildung:     { label:"Bildung & Wissenschaft",   color:"#8B4513", bg:"#f5ebe0" },
+  buergertum:  { label:"Bürgertum & Gesellschaft",  color:"#5B6E4E", bg:"#edf2e8" },
+  unternehmen: { label:"Unternehmerinnen & Beruf",  color:"#7B5B8D", bg:"#f0ebf4" },
+  sozial:      { label:"Sozialdemokratinnen",        color:"#B44040", bg:"#fce8e8" },
+  ns_taeter:   { label:"NS-Akteurinnen",             color:"#4A4A4A", bg:"#ededed" },
+  widerstand:  { label:"Widerstand & NS-Opfer",     color:"#2D5F8A", bg:"#e6eff6" },
+  kunst:       { label:"Künstlerinnen",              color:"#C27830", bg:"#fdf3e7" },
+  erfinden:    { label:"Erfinderinnen",              color:"#1A7A6D", bg:"#e4f4f1" }
+};
+
+const women = [
+  {name:"Anna Maria Rhomberg",born:1778,died:1863,geb:"Herrburger",cat:"unternehmen",desc:"Mitgründerin Herrburger & Rhomberg, Buchhalterin und Gesellschafterin. Sie trat 1798 nach dem Tod ihres Vaters als seine Nachfolgerin in die Handelsfirma ein und war bis 1852 als Gesellschafterin aktiv.",events:[{y:1798,t:"Eintritt in die Firma nach Tod des Vaters"},{y:1819,t:"Übernahme als Gesellschafterin nach Tod des Ehemanns"},{y:1849,t:"Tod des Sohnes Joseph Anton durch Typhus"}]},
+  {name:"Gertrud Bohle",born:1827,died:1899,geb:"Hilbe",cat:"unternehmen",desc:"Mutter des Nudelfabrikanten Johann Bohle, führte ein Lebensmittel- und Spezereiartikelgeschäft in der Eisengasse 13.",events:[]},
+  {name:"Maria Anna Huber",born:1827,died:1888,geb:"Bleyle",cat:"unternehmen",desc:"Mohrenwirtin und Brauereibesitzerin. Führte nach dem plötzlichen Tod ihres Mannes 12 Jahre allein die Brauerei und den Gasthof. Ließ den Mohren komplett neu bauen.",events:[{y:1851,t:"Hochzeit mit Ferdinand Huber"},{y:1863,t:"Tod des Ehemanns – alleinige Geschäftsführung"},{y:1869,t:"Neubau des Gasthofs Mohren"},{y:1875,t:"Sohn August tritt in Geschäftsführung ein"}]},
+  {name:"Anna Rhomberg",born:1852,died:1942,geb:"Kogler",cat:"buergertum",desc:"\"First Lady\" Vorarlbergs als Gattin des Landeshauptmanns Adolf Rhomberg. Wohltäterin, Stifterin, Vereinsfunktionärin. Lebte 90 Jahre.",events:[{y:1875,t:"Hochzeit mit Adolf Rhomberg"},{y:1892,t:"Schwere Erkrankung – Gelübde des Ehemanns"},{y:1921,t:"Tod des Ehemanns – Rückzug"},{y:1935,t:"Annagasse nach ihr benannt"}]},
+  {name:"Kathe Luger-Hefel",born:1853,died:1936,geb:"Hefel",cat:"erfinden",desc:"Erfinderin des Luger'schen Patentherds – ein Koch- und Heizverfahren, das in 8 Staaten patentiert wurde (Ungarn, England, Schweiz, Amerika u.a.).",events:[{y:1880,t:"Tod des ersten Ehemanns und der Tochter"},{y:1907,t:"Patentanmeldung in 8 Staaten"}]},
+  {name:"Crescentia Ulmer",born:1855,died:1883,geb:"Schatzmann",cat:"buergertum",desc:"Selbstbewusste Feldkircherin, die sich als ebenbürtige Partnerin ihres Mannes sah. Starb mit 27 Jahren an Tuberkulose, nur 10 Monate nach ihrem Mann.",events:[{y:1877,t:"Doppelhochzeit und Umzug nach Dornbirn"},{y:1882,t:"Tod des Ehemanns Anton an TBC"},{y:1883,t:"Eigener Tod an TBC mit 27 Jahren"}]},
+  {name:"Anna Maria Mäser",born:1860,died:1943,geb:"Waibel",cat:"unternehmen",desc:"Eigenständige Unternehmerin und Prokuristin der Firma Benedikt Mäser. Führte ihr eigenes Wäsche-Wirkwarengeschäft am Marktplatz und war Gesellschafterin der Firma.",events:[{y:1896,t:"Eröffnung Wäsche-Wirk-Strickwarengeschäft"},{y:1908,t:"Unterstützung der Firmenleitung nach Schlaganfall des Gatten"},{y:1912,t:"Prokura nach Tod des Ehemanns"}]},
+  {name:"Bertha Huber",born:1861,died:1909,geb:"Haltmeyer",cat:"unternehmen",desc:"Mohrenwirtin und Schwiegertochter von Anna Huber. Führte nach dem Tod ihres Mannes die zweitgrößte Brauerei Tirols und Vorarlbergs. Starb an Brustkrebs.",events:[{y:1883,t:"Hochzeit mit August Huber"},{y:1895,t:"Tod des Ehemanns – Weiterführung der Geschäfte"},{y:1909,t:"Tod nach Brustkrebserkrankung"}]},
+  {name:"Blanka Bohle",born:1867,died:1932,geb:"Pscheid",cat:"unternehmen",desc:"Tatkräftige Unternehmerin, die nach dem Tod ihres Mannes und einem Fabriksbrand die Teigwarenfabrik komplett neu aufbaute.",events:[{y:1913,t:"Tod des Ehemanns & Brand der Fabrik"},{y:1914,t:"Neubau Kehlerstraße fertiggestellt"},{y:1919,t:"Dritte Eheschließung, gemeinsame Weiterführung"}]},
+  {name:"Martina Moosbrugger",born:1867,died:1940,cat:"bildung",desc:"\"Bestens bekannte Lehrerin\" in Dornbirn, Nichte von Franz Michael Felder. Klagte ihren Arbeitgeber bis zum OGH. Kandidierte 1919 als einzige Frau bei der Landtagswahl.",events:[{y:1895,t:"Reifeprüfung in Innsbruck"},{y:1904,t:"Leiterin an der Mädchen-Fortbildungsschule"},{y:1919,t:"Kandidatur bei der Landtagswahl"}]},
+  {name:"Eugenie Rhomberg",born:1868,died:1926,geb:"Bertolini",cat:"buergertum",desc:"Studierte Malerei an der Münchner Damenakademie, möglicherweise Schülerin von Tina Blau. Nach der Heirat ist kein einziges Gemälde von ihr überliefert. Gustav Klimt schrieb ihr eine Postkarte.",events:[{y:1883,t:"Internat bei den ‚Englischen Fräulein' in Rovereto"},{y:1890,t:"Kunststudium Damenakademie München"},{y:1895,t:"Hochzeit mit Julius Rhomberg"},{y:1902,t:"Postkarte von Gustav Klimt"}]},
+  {name:"Hedwig Winder",born:1868,died:1950,cat:"bildung",desc:"Anerkannte Botanikerin und Privatgelehrte. Ihr Herbar mit über 15.000 Pflanzen befindet sich in der inatura. Entdeckte mehrere neue Pflanzenarten.",events:[{y:1899,t:"Entdeckung des Einblättrigen Kleingriffel"},{y:1906,t:"Erwähnung im Jahrbuch des Landesmuseumsvereins"},{y:1910,t:"Entdeckung des Nelkenhafers"}]},
+  {name:"Marie Leibfried",born:1869,died:1930,geb:"Brüstle",cat:"sozial",desc:"Pionierin der Sozialdemokratie in Vorarlberg. Landesvorsitzende der Frauenorganisation. Wurde öffentlich als \"freche Dirne\" beschimpft, ließ sich aber nicht beirren.",events:[{y:1893,t:"Erste politische Aktivitäten"},{y:1901,t:"Erste weibliche Funktionärin der Textilarbeiter-Union"},{y:1903,t:"Einzige Frau am 1. Mai-Aufmarsch"},{y:1918,t:"Tod ihres Mannes Hermann an Spanischer Grippe"},{y:1919,t:"Kandidatur bei ersten Landtagswahlen"}]},
+  {name:"Konstantina Tamanini",born:1871,died:1960,cat:"unternehmen",desc:"\"Konstantina uf om Blatz\" – legendäre Marktfrau am Dornbirner Marktplatz. Aus einer Trentiner Einwandererfamilie. Verkaufte bis über 80 Jahre lang.",events:[{y:1895,t:"Übernahme des Marktstandes von der Mutter"},{y:1931,t:"Neuer Kiosk nach Architektenentwurf"}]},
+  {name:"Ottilia Schwendinger",born:1875,died:1959,geb:"Raab",cat:"unternehmen",desc:"Gründerin eines der ersten privaten Entbindungsheime Vorarlbergs in der Gilmstraße. Vorsteherin des Hebammengremiums.",events:[{y:1900,t:"Eröffnung Entbindungsheim Gilmstraße"},{y:1934,t:"Renoviertes Entbindungsheim mit Tochter Ida"}]},
+  {name:"Stefanie Rüsch",born:1879,died:1954,cat:"kunst",desc:"Konzertsängerin mit Debüt im Wiener Musikvereinssaal. Studierte am Königlichen Konservatorium Stuttgart. Konzerte in Hannover und Berlin.",events:[{y:1898,t:"Erste Auftritte in Dornbirn"},{y:1911,t:"Liederabend im Konzerthaus Hannover"},{y:1914,t:"Richard-Wagner-Nachmittag in Berlin"},{y:1917,t:"Debüt im Wiener Musikvereinssaal"}]},
+  {name:"Anna Fässler",born:1882,died:1958,geb:"Lauber",cat:"widerstand",desc:"Sozialdemokratin, Mitglied im Frauenreichskomitee neben Rosa Jochmann. Wegen Abhörens von \"Feindsendern\" im Zuchthaus Aichach inhaftiert.",events:[{y:1926,t:"Ersatzmitglied in der Dornbirner Stadtvertretung"},{y:1929,t:"Mitglied im Frauenreichskomitee Wien"},{y:1941,t:"Einlieferung Zuchthaus Aichach"},{y:1942,t:"Bedingte Entlassung"}]},
+  {name:"Ernestine Tamanini",born:1884,died:null,cat:"unternehmen",desc:"Bankbeamtin und Agentin der Singer Nähmaschinen AG. Schwester von Konstantina. Gewann einen Stenografie-Wettbewerb.",events:[{y:1908,t:"Zweiter Preis im Schnellschreiben"}]},
+  {name:"Marie Sborowsky",born:1884,died:1942,cat:"widerstand",desc:"Zahntechnikerin aus der Ukraine, eröffnete eine Praxis in Dornbirn. Goldmedaillen in Paris und Lodz. Als Jüdin 1942 nach Theresienstadt deportiert und ermordet.",events:[{y:1909,t:"Eröffnung Praxis in Dornbirn"},{y:1918,t:"Filiale in Bludenz"},{y:1921,t:"Heirat und Wegzug nach Niederösterreich"},{y:1942,t:"Deportation nach Theresienstadt – ermordet"}]},
+  {name:"Selma Mitteldorf",born:1887,died:1938,cat:"widerstand",desc:"Pionierin der Säuglings- und TBC-Fürsorge in Dornbirn und Vorarlberg. Nahm sich nach dem \"Anschluss\" das Leben, da sie als \"Halbjüdin\" verfolgt wurde.",events:[{y:1918,t:"Beginn der Arbeit in der TBC-Fürsorgestelle"},{y:1929,t:"Tod ihrer Freundin Olga Semaka"},{y:1938,t:"Suizid in der Nacht nach dem Anschluss"}]},
+  {name:"Anna Lecher",born:1889,died:1966,geb:"Halbeis",cat:"unternehmen",desc:"Mitarbeiterin und spätere Leiterin der Teigwarenfabrik Bohle. Übernahm nach dem Tod ihres Mannes Albert allein die Verantwortung.",events:[{y:1958,t:"Alleinige Leitung nach Tod des Ehemanns"}]},
+  {name:"Felizita Berger",born:1889,died:null,geb:"Kofler",cat:"erfinden",desc:"Erfinderin eines neuartigen Kragenbefestigers, der den scheuernden \"Vatermörder\"-Knopf durch ein elastisches Band ersetzte.",events:[{y:1913,t:"Patentanmeldung Kragenbefestiger"},{y:1915,t:"Verkaufsanzeigen in Tiroler Zeitungen"}]},
+  {name:"Grete Buchmüller-Hladik",born:1893,died:1978,cat:"buergertum",desc:"Gründerin der Dornbirner Säuglings-Fürsorgestelle. Tochter des Hämmerle-Direktors. Arbeitete eng mit Selma Mitteldorf zusammen.",events:[{y:1916,t:"Aufbau der Säuglingsfürsorge Dornbirn"},{y:1919,t:"Obfrau des Kriegerwitwen- und Waisenvereins"}]},
+  {name:"Maria Mäser",born:1894,died:1983,geb:"Martinelli",cat:"unternehmen",desc:"Stammte aus dem Trentino, übernahm die Leitung der Konfektion bei Firma Mäser. Garantin für Qualität. Ca. 50 Jahre im Betrieb.",events:[{y:1916,t:"Beginn der Arbeit in der Firma Mäser"},{y:1930,t:"Tod des Ehemanns – Miteigentümerin"}]},
+  {name:"Ida Bammert-Ulmer",born:1895,died:1967,cat:"ns_taeter",desc:"Vorarlbergs erste Zeitungsredakteurin, aber auch NS-Propagandistin und \"Schreibtischtäterin\". Leitete ein NSV-Entbindungsheim. Blieb unbelehrbar bis zum Tod.",events:[{y:1910,t:"Absolventin der Mädchen-Fortbildungsschule"},{y:1930,t:"Schriftleiterin des Vorarlberger Tagblatts"},{y:1934,t:"Verhaftung und Abschiebung nach Deutschland"},{y:1944,t:"Leitung NSV-Entbindungsheim Oberstdorf"},{y:1950,t:"Kandidatur für den VdU bei Gemeinderatswahl"}]},
+  {name:"Klara Lorenz",born:1896,died:1988,cat:"sozial",desc:"Erste Vorarlbergerin an der Arbeiterhochschule Wien (1926). Studierte dort mit Rosa Jochmann und Adolf Schärf. Textilarbeiterin und Parteifunktionärin.",events:[{y:1924,t:"Obmännin der Frauenorganisation Dornbirn"},{y:1926,t:"Studium an der Arbeiterhochschule Wien"},{y:1932,t:"Schlussansprache am Frauentag in Dornbirn"}]},
+  {name:"Berta Rhomberg",born:1897,died:1976,geb:"Kofler",cat:"bildung",desc:"Apothekerin – über 56 Jahre berufstätig. Schwiegertochter von Eugenie Rhomberg. NSDAP-Mitglied. Verlor ihren Sohn Ulrich im Krieg.",events:[{y:1920,t:"Apothekerprüfung Mag. Pharm."},{y:1922,t:"Hochzeit mit Theodor Rhomberg"},{y:1936,t:"Alleininhaberin der Stadtapotheke"},{y:1946,t:"Arbeitsverbot als ehemalige NSDAP-Mitglied"}]},
+  {name:"Mathilde Bösch-Berger",born:1898,died:1978,cat:"bildung",desc:"Erste promovierte Ärztin Vorarlbergs. Floh vor den Nazis nach Amerika. Organisierte die Hilfsaktion \"Amerika hilft Vorarlberg\" und rettete hungernde Kinder.",events:[{y:1918,t:"Matura mit Auszeichnung in Dornbirn"},{y:1924,t:"Promotion – erste Ärztin Vorarlbergs"},{y:1940,t:"Flucht von Lissabon nach New York"},{y:1947,t:"Hilfsaktion \"Amerika hilft Vorarlberg\""}]},
+  {name:"Mia Oberhauser",born:1900,died:null,cat:"erfinden",desc:"Miterfinderin des Dufthalters und Tropfenfängers für Kaffee- und Teekannen. Patent gemeinsam mit Fina Fitz angemeldet.",events:[{y:1932,t:"Patent Dufthalter & Tropfenfänger"}]},
+  {name:"Eugenie Thöny",born:1901,died:null,geb:"Mathis",cat:"erfinden",desc:"Erfinderin eines verbesserten Büstenhalters mit elastischen Körbchen und festem Rahmen. Inhaberin eines Strickerei-Gewerbes.",events:[{y:1930,t:"Inhaberin Handstrickerei-Betrieb"},{y:1932,t:"Patent BH-Konstruktion"},{y:1934,t:"Umzug nach Salzburg nach Scheidung"}]},
+  {name:"Gertrude Turteltaub",born:1904,died:1944,geb:"Popper",cat:"widerstand",desc:"Jüdische Mutter aus Dornbirn. 1939 vertrieben. Die Flucht nach Uruguay scheiterte um einen Tag. Mit der ganzen Familie in Auschwitz ermordet.",events:[{y:1939,t:"Zwangsumsiedelung nach Wien, Flucht gescheitert"},{y:1944,t:"Deportation und Ermordung in Auschwitz"}]},
+  {name:"Maria Wieland",born:1904,died:1944,geb:"Gunz",cat:"widerstand",desc:"Von der Gestapo brutal gefoltert (geschlagen, getreten, Vergewaltigungsversuch). Starb an den Folgen in der Nervenklinik Innsbruck.",events:[{y:1940,t:"Verhaftung des Mannes – Beginn der Gestapo-Verhöre"},{y:1944,t:"Tod in der Nervenklinik Innsbruck"}]},
+  {name:"Hedwig Gölkel",born:1905,died:1991,geb:"Rhomberg",cat:"kunst",desc:"Akademische Malerin, Nichte von Eugenie Rhomberg. Studierte an der Akademie der bildenden Künste Wien. Virtuose Aquarellistin.",events:[{y:1927,t:"Aufnahme Akademie der bildenden Künste Wien"},{y:1939,t:"Ausstellung in Dornbirn"},{y:1987,t:"Malreise nach Paros mit 82 Jahren"}]},
+  {name:"Hilde Lins-Möller",born:1906,died:1990,cat:"kunst",desc:"Gefeierte Opernsängerin. Engagements in Bern, Hamburg, Graz, Essen und Chemnitz. Sang Carmen, Amneris, Fricka und viele mehr.",events:[{y:1930,t:"Engagement als 1. Altistin in Bern"},{y:1932,t:"Wechsel an die Oper Hamburg unter Karl Böhm"},{y:1939,t:"Gastspiele Wiener Volksoper & Münchner Staatsoper"},{y:1948,t:"Ende der Karriere, Heirat, Buenos Aires"}]},
+  {name:"Erika Rhomberg",born:1906,died:1941,cat:"ns_taeter",desc:"\"Mutter der SS\" – Financierin der illegalen NSDAP aus Fabrikantenfamilie. Sammelte Geld bei Industriellen. Rettete 13 SS-Angeklagte vor dem Standgericht.",events:[{y:1934,t:"Rettung von 13 SS-Angeklagten"},{y:1935,t:"Verhaftung und 14 Tage Gefängnis"},{y:1937,t:"Hakenkreuzfahne am eigenen Haus"},{y:1941,t:"Tod mit 35 Jahren an Herzleiden"}]},
+  {name:"Fina Fitz",born:1910,died:null,cat:"erfinden",desc:"Miterfinderin des Dufthalters und Tropfenfängers. Inhaberin einer Agentur in der Mitteldorfgasse.",events:[{y:1932,t:"Patent gemeinsam mit Mia Oberhauser"}]},
+  {name:"Ida Wipplinger",born:1911,died:1993,geb:"Schwendinger",cat:"unternehmen",desc:"Jüngste Hebamme Österreichs (1931). Pionierin sanfter Geburtsmethoden: Atemtechnik, freie Gebärposition, Väter im Kreißsaal.",events:[{y:1931,t:"Jüngste Hebamme Österreichs"},{y:1934,t:"Eröffnung Entbindungsheim mit Mutter"},{y:1937,t:"Dornbirner Stadthebamme"}]},
+  {name:"Elsa Himmer",born:1914,died:1988,cat:"widerstand",desc:"12 Jahre Zuchthaus wegen \"Hochverrat\". Ihr Mann wurde hingerichtet. Kinder ins Waisenhaus. Musste in der Rüstungsindustrie Gasmasken herstellen.",events:[{y:1940,t:"Verhaftung durch die Gestapo (eigener Stiefbruder)"},{y:1942,t:"12 Jahre Zuchthaus – Ehemann hingerichtet"},{y:1944,t:"Zwangsarbeit in der Baumwollspinnerei Kolbermoor"},{y:1945,t:"Befreiung durch US-Truppen"}]},
+  {name:"Hedwig Thurnher",born:1915,died:2001,geb:"Mäser",cat:"unternehmen",desc:"Persönlich haftende Gesellschafterin der Firma Mäser-Elastisana. Garantin für Qualität. Im Gewerberegister nur als \"Geschäftsführersgattin\" geführt.",events:[{y:1933,t:"Heirat mit Dr. Manfred Thurnher"},{y:1969,t:"Alleinige Firmenleitung nach Tod des Gatten"}]},
+  {name:"Herta-Maria Witzemann",born:1918,died:1999,cat:"kunst",desc:"Weltweit bekannte Innenarchitektin. Jüngste Professorin Stuttgarts (1951). Großes Bundesverdienstkreuz. Ihre Möbel werden noch heute verkauft.",events:[{y:1948,t:"Selbstständige Innenarchitektin"},{y:1951,t:"Jüngste Professorin an der Stuttgarter Akademie"},{y:1972,t:"Präsidentin des Bundesverbandes"},{y:1993,t:"Großes Deutsches Bundesverdienstkreuz"}]}
+];
+
+const historicalMarkers = [
+  {y:1774,label:"Schulpflicht (Maria Theresia)"},
+  {y:1848,label:"Revolution 1848"},
+  {y:1869,label:"Reichsvolksschulgesetz"},
+  {y:1897,label:"Frauen an Uni zugelassen"},
+  {y:1914,label:"1. Weltkrieg beginnt"},
+  {y:1918,label:"Frauenwahlrecht"},
+  {y:1933,label:"NSDAP-Verbot in Ö"},
+  {y:1938,label:"\"Anschluss\""},
+  {y:1945,label:"Kriegsende"}
+];
+
+const YEAR_MIN=1770, YEAR_MAX=2005, YEAR_SPAN=YEAR_MAX-YEAR_MIN;
+const ROW_H=36, HEADER=80;
+let selectedCat=null;
+
+function yearToPercent(y){return((y-YEAR_MIN)/YEAR_SPAN)*100}
+
+function render(){
+  let filtered=selectedCat?women.filter(w=>w.cat===selectedCat):women;
+  filtered.sort((a,b)=>a.born-b.born);
+  
+  document.getElementById('subtitle').textContent=filtered.length+' Frauen · 1770–2005 · Lebenslinien nach Geburtsjahr sortiert';
+  
+  // Filters
+  let fhtml='<button class="cat-btn '+(selectedCat===null?'active':'')+'" onclick="selectCat(null)">Alle</button>';
+  for(let[key,val]of Object.entries(CATEGORIES)){
+    let style=selectedCat===key?'':'style="border-left:3px solid '+val.color+'"';
+    fhtml+='<button class="cat-btn '+(selectedCat===key?'active':'')+'" '+style+' onclick="selectCat(\''+key+'\')">'+val.label+'</button>';
+  }
+  document.getElementById('filters').innerHTML=fhtml;
+  
+  let totalH=HEADER+filtered.length*ROW_H+60;
+  let tl=document.getElementById('timeline');
+  let html='<div style="position:relative;height:'+totalH+'px">';
+  
+  // Decade grid
+  for(let d=YEAR_MIN;d<=YEAR_MAX;d+=10){
+    let pct=yearToPercent(d);
+    html+='<div class="grid-line" style="left:'+pct+'%"></div>';
+    html+='<div class="year-label" style="left:'+pct+'%">'+d+'</div>';
+  }
+  
+  // Historical markers
+  for(let m of historicalMarkers){
+    let pct=yearToPercent(m.y);
+    html+='<div class="hist-marker" style="left:'+pct+'%"></div>';
+    html+='<div class="hist-label" style="left:'+pct+'%">'+m.label+'</div>';
+  }
+  
+  // Person rows
+  filtered.forEach((p,idx)=>{
+    let endYear=p.died||(p.born<1920?p.born+60:2000);
+    let startPct=yearToPercent(p.born);
+    let endPct=yearToPercent(endYear);
+    let cat=CATEGORIES[p.cat];
+    let top=HEADER+idx*ROW_H;
+    
+    let eventsHtml='';
+    for(let ev of p.events){
+      let evPct=((ev.y-p.born)/(endYear-p.born))*100;
+      eventsHtml+='<div class="event-dot" style="left:'+evPct+'%;color:'+cat.color+'" data-tip="'+ev.y+': '+ev.t.replace(/"/g,'&quot;')+'"></div>';
+    }
+    if(!p.died) eventsHtml+='<div class="arrow" style="color:'+cat.color+'">→</div>';
+    
+    html+='<div class="person-row" style="top:'+top+'px">';
+    html+='<div class="life-bar" data-idx="'+idx+'" style="left:'+startPct+'%;width:'+(endPct-startPct)+'%;background:linear-gradient(135deg,'+cat.color+','+cat.color+'dd)"';
+    html+=' onmouseenter="barHover(this,true)" onmouseleave="barHover(this,false)" onclick="showDetail('+idx+')">';
+    html+='<span class="person-label">'+p.name+'</span>';
+    html+=eventsHtml;
+    html+='</div></div>';
+  });
+  
+  html+='</div>';
+  tl.innerHTML=html;
+  
+  // Legend
+  let lhtml='<span class="legend-title">Legende</span>';
+  for(let[key,val]of Object.entries(CATEGORIES)){
+    lhtml+='<div class="legend-item"><div class="legend-swatch" style="background:'+val.color+'"></div><span class="legend-text">'+val.label+'</span></div>';
+  }
+  lhtml+='<div class="legend-item" style="margin-left:8px"><div style="width:6px;height:6px;border-radius:50%;background:#fff;border:1.5px solid #888"></div><span class="legend-text">Schlüsselereignis (hover)</span></div>';
+  document.getElementById('legend').innerHTML=lhtml;
+  
+  // Store filtered for detail access
+  window._filtered=filtered;
+}
+
+function selectCat(cat){selectedCat=(selectedCat===cat)?null:cat;render()}
+
+function barHover(el,on){
+  if(on)el.classList.add('highlight');else el.classList.remove('highlight');
+  let tip=document.getElementById('tooltip');
+  if(on){
+    let idx=parseInt(el.dataset.idx);
+    let p=window._filtered[idx];
+    tip.innerHTML='<b>'+p.name+'</b><br>'+p.born+' – '+(p.died||'?')+'<br><i>'+CATEGORIES[p.cat].label+'</i>';
+    tip.style.display='block';
+    el.addEventListener('mousemove',moveTooltip);
+  }else{
+    tip.style.display='none';
+    el.removeEventListener('mousemove',moveTooltip);
+  }
+}
+
+function moveTooltip(e){
+  let tip=document.getElementById('tooltip');
+  tip.style.left=(e.clientX+12)+'px';
+  tip.style.top=(e.clientY-40)+'px';
+}
+
+function showDetail(idx){
+  let p=window._filtered[idx];
+  let cat=CATEGORIES[p.cat];
+  let overlay=document.getElementById('detailOverlay');
+  let panel=document.getElementById('detailPanel');
+  
+  let html='<button class="detail-close" onclick="closeDetail()">×</button>';
+  html+='<div class="detail-cat" style="background:'+cat.bg+';color:'+cat.color+'">'+cat.label+'</div>';
+  html+='<div class="detail-name">'+p.name+'</div>';
+  if(p.geb) html+='<div class="detail-geb">geb. '+p.geb+'</div>';
+  html+='<div class="detail-years">'+p.born+' – '+(p.died||'?')+'</div>';
+  html+='<p class="detail-desc">'+p.desc+'</p>';
+  if(p.events.length>0){
+    html+='<div class="detail-events-title">Schlüsselmomente</div>';
+    for(let ev of p.events){
+      html+='<div class="detail-event"><div class="detail-event-year" style="color:'+cat.color+'">'+ev.y+'</div><div class="detail-event-text">'+ev.t+'</div></div>';
+    }
+  }
+  
+  panel.innerHTML=html;
+  panel.style.display='block';
+  overlay.style.display='block';
+}
+
+function closeDetail(){
+  document.getElementById('detailPanel').style.display='none';
+  document.getElementById('detailOverlay').style.display='none';
+}
+
+document.getElementById('detailOverlay').onclick=closeDetail;
+
+render();
+</script>
+</body>
+</html>
