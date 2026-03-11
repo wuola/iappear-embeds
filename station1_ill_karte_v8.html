@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Die Ill – Lebensader Vorarlbergs | i.grow</title>
+
+    <!-- Leaflet CSS from CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0a1628;
+            color: #e0e0e0;
+        }
+
+        #header {
+            background: linear-gradient(135deg, #0a1628 0%, #1a2a3a 100%);
+            padding: 12px 20px;
+            border-bottom: 2px solid #7ec8e3;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            z-index: 1000;
+            position: relative;
+        }
+
+        #header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #5cc8f0;
+            margin: 0;
+        }
+
+        .badge {
+            background: #7ec8e3;
+            color: #0a1628;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        #container {
+            display: flex;
+            width: 100%;
+            height: calc(100% - 50px);
+        }
+
+        #map {
+            flex: 1;
+            position: relative;
+            background: #0a1628;
+        }
+
+        .leaflet-container {
+            background: #0a1628;
+            font-family: inherit;
+        }
+
+        /* Custom Leaflet controls styling */
+        .leaflet-control {
+            background: #1a2a3a !important;
+            border: 1px solid #7ec8e3 !important;
+            border-radius: 4px !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        .leaflet-control-layers {
+            background: #1a2a3a !important;
+            border: 1px solid #7ec8e3 !important;
+        }
+
+        .leaflet-control-layers-toggle {
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><rect fill='%237ec8e3' x='4' y='6' width='24' height='4'/><rect fill='%237ec8e3' x='4' y='14' width='24' height='4'/><rect fill='%237ec8e3' x='4' y='22' width='24' height='4'/></svg>") !important;
+        }
+
+        .leaflet-control-layers-list {
+            background: #1a2a3a;
+            color: #5cc8f0;
+        }
+
+        .leaflet-control-layers label {
+            color: #e0e0e0;
+            font-weight: 500;
+        }
+
+        .leaflet-control-layers input[type="radio"],
+        .leaflet-control-layers input[type="checkbox"] {
+            accent-color: #7ec8e3;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        /* Info Panel */
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(26, 42, 58, 0.95);
+            border: 1px solid #7ec8e3;
+            border-radius: 8px;
+            padding: 16px;
+            max-width: 280px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            z-index: 400;
+            backdrop-filter: blur(10px);
+        }
+
+        .info-panel h2 {
+            color: #5cc8f0;
+            font-size: 16px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .info-panel p {
+            color: #c0c0c0;
+            font-size: 13px;
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .info-panel .fact {
+            color: #7ec8e3;
+            font-weight: 600;
+            font-size: 14px;
+            margin: 8px 0 4px 0;
+        }
+
+        .info-panel .hint {
+            color: #a0a0a0;
+            font-size: 12px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #7ec8e3;
+            font-style: italic;
+        }
+
+        /* Legend */
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(26, 42, 58, 0.95);
+            border: 1px solid #7ec8e3;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 12px;
+            max-width: 200px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            z-index: 400;
+            backdrop-filter: blur(10px);
+        }
+
+        .legend h3 {
+            color: #5cc8f0;
+            margin: 0 0 8px 0;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            color: #c0c0c0;
+        }
+
+        .legend-item span {
+            margin-left: 8px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        .legend-color.ill {
+            background: #5cc8f0;
+            width: 24px;
+            height: 4px;
+        }
+
+        .legend-color.tributaries {
+            background: #4a9fd6;
+            width: 20px;
+            height: 3px;
+        }
+
+        /* Flow animation canvas */
+        #flowCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 500;
+        }
+
+        /* Audio player panel */
+        .audio-panel {
+            position: absolute;
+            bottom: 20px;
+            right: 280px;
+            z-index: 500;
+            background: rgba(26, 42, 58, 0.95);
+            border: 1px solid #7ec8e3;
+            border-radius: 8px;
+            padding: 10px 14px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 280px;
+        }
+
+        .audio-panel .audio-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .audio-panel .audio-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .audio-panel .audio-title {
+            color: #5cc8f0;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .audio-panel .audio-subtitle {
+            color: #888;
+            font-size: 10px;
+        }
+
+        .audio-play-btn {
+            background: #1a3a5c;
+            border: 1px solid #5cc8f0;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #5cc8f0;
+            font-size: 14px;
+            flex-shrink: 0;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .audio-play-btn:hover {
+            background: #2a4a6c;
+            transform: scale(1.05);
+        }
+
+        .audio-play-btn.playing {
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
+
+        .audio-progress {
+            width: 100%;
+            height: 3px;
+            background: #333;
+            border-radius: 2px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .audio-progress-bar {
+            height: 100%;
+            background: #5cc8f0;
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s linear;
+        }
+
+        @media (max-width: 768px) {
+            .audio-panel {
+                right: 10px;
+                bottom: 70px;
+                max-width: calc(100vw - 20px);
+            }
+        }
+
+        /* Flow toggle button */
+        .flow-toggle {
+            position: absolute;
+            top: 10px;
+            left: 310px;
+            z-index: 1000;
+            background: rgba(26, 42, 58, 0.95);
+            border: 1px solid #7ec8e3;
+            border-radius: 6px;
+            padding: 6px 10px;
+            color: #5cc8f0;
+            font-size: 12px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+
+        .flow-toggle:hover {
+            background: rgba(40, 60, 80, 0.95);
+        }
+
+        .flow-toggle.active {
+            border-color: #5cc8f0;
+            background: rgba(20, 50, 70, 0.95);
+        }
+
+        .flow-toggle .toggle-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #555;
+            transition: background 0.3s;
+        }
+
+        .flow-toggle.active .toggle-dot {
+            background: #5cc8f0;
+            box-shadow: 0 0 6px #5cc8f0;
+        }
+
+        /* Custom Popup */
+        .leaflet-popup-content-wrapper {
+            background: #1a2a3a !important;
+            border: 1px solid #7ec8e3 !important;
+            border-radius: 6px !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7) !important;
+        }
+
+        .leaflet-popup-content {
+            color: #e0e0e0 !important;
+            font-size: 13px !important;
+            line-height: 1.5;
+        }
+
+        .leaflet-popup-content h3 {
+            color: #5cc8f0;
+            font-size: 14px;
+            margin: 0 0 6px 0;
+            font-weight: 600;
+        }
+
+        .leaflet-popup-content p {
+            margin: 0;
+            color: #c0c0c0;
+        }
+
+        .leaflet-popup-tip {
+            background: #1a2a3a !important;
+            border-left: 1px solid #7ec8e3 !important;
+            border-right: 1px solid #7ec8e3 !important;
+        }
+
+        /* POI Icons */
+        .poi-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            border: 2px solid;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .poi-icon:hover {
+            transform: scale(1.15);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6);
+        }
+
+        .poi-icon.quelle {
+            background: #0d6efd;
+            border-color: #4a9fd6;
+        }
+
+        .poi-icon.muendung {
+            background: #0d6efd;
+            border-color: #4a9fd6;
+        }
+
+        .poi-icon.ort {
+            background: #2a6496;
+            border-color: #5cc8f0;
+        }
+
+        .poi-icon.landschaft {
+            background: #2d7a3a;
+            border-color: #6bdc7a;
+        }
+
+        .poi-icon.wasserkraft {
+            background: #b45309;
+            border-color: #fbbf24;
+        }
+
+        /* Flood control panel */
+        .flood-control {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(26, 42, 58, 0.95);
+            border: 1px solid #e74c3c;
+            border-radius: 8px;
+            padding: 12px 16px;
+            z-index: 500;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            display: none;
+            max-width: 260px;
+        }
+
+        .flood-control.visible {
+            display: block;
+        }
+
+        .flood-control h3 {
+            color: #e74c3c;
+            font-size: 13px;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .flood-control .close-btn {
+            cursor: pointer;
+            color: #888;
+            font-size: 16px;
+            line-height: 1;
+            padding: 0 2px;
+        }
+
+        .flood-control .close-btn:hover { color: #e74c3c; }
+
+        .flood-control label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #c0c0c0;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px 0;
+        }
+
+        .flood-control label:hover { color: #fff; }
+
+        .flood-control input[type="radio"] {
+            accent-color: #e74c3c;
+        }
+
+        .flood-control .legend-hint {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #333;
+            font-size: 11px;
+            color: #888;
+        }
+
+        .flood-control .hq-color {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border-radius: 2px;
+            vertical-align: middle;
+            margin-right: 4px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            #header {
+                padding: 10px 16px;
+            }
+
+            #header h1 {
+                font-size: 18px;
+            }
+
+            .badge {
+                font-size: 11px;
+                padding: 3px 10px;
+            }
+
+            .info-panel {
+                max-width: calc(100vw - 40px);
+                top: 60px;
+            }
+
+            .legend {
+                max-width: calc(100vw - 40px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>Die Ill – Lebensader Vorarlbergs</h1>
+        <div class="badge">i.grow · Baustein Flusssysteme</div>
+    </div>
+
+    <div id="container">
+        <div id="map">
+            <canvas id="flowCanvas"></canvas>
+            <button class="flow-toggle" id="flowToggle">
+                <span class="toggle-dot"></span> Fließanimation
+            </button>
+        </div>
+
+        <div class="info-panel">
+            <h2>Die Ill</h2>
+            <p>Erkunde das größte Flusssystem Vorarlbergs. Klicke auf die Flussläufe und Orte, um mehr zu erfahren.</p>
+            <div class="fact">Länge: 72 km</div>
+            <p>Einzugsgebiet: 1.281 km²</p>
+            <p>Mittlerer Abfluss: 65,5 m³/s</p>
+            <p>Größter Zufluss des Alpenrheins</p>
+            <div class="hint">💡 Klicke auf den Fluss, Nebenflüsse und die Markierungen für Details!</div>
+        </div>
+
+        <div class="legend">
+            <h3>Legende</h3>
+            <div class="legend-item">
+                <div class="legend-color ill"></div>
+                <span>Ill (Hauptfluss)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color tributaries"></div>
+                <span>Nebenflüsse</span>
+            </div>
+            <div class="legend-item">
+                <span>💧🌊 Quelle / Mündung</span>
+            </div>
+            <div class="legend-item">
+                <span>⚡ Wasserkraft</span>
+            </div>
+            <div class="legend-item">
+                <span>🏙️🏰 Orte an der Ill</span>
+            </div>
+            <div class="legend-item">
+                <span>🌊🦆🔄 Hochwasser / Natur / Ökologie</span>
+            </div>
+            <div class="legend-item" style="margin-top:4px; padding-top:4px; border-top:1px solid #333;">
+                <span style="color:#e74c3c;">🌊 Klick = Hochwasserzonen (VOGIS)</span>
+            </div>
+        </div>
+    </div>
+
+        <!-- Audio player -->
+        <div class="audio-panel" id="audioPanel">
+            <span class="audio-icon">🎧</span>
+            <div class="audio-info">
+                <div class="audio-title">Was ist ein Flusssystem?</div>
+                <div class="audio-subtitle">Audiobeitrag anhören</div>
+                <div class="audio-progress">
+                    <div class="audio-progress-bar" id="audioProgress"></div>
+                </div>
+            </div>
+            <button class="audio-play-btn" id="audioPlayBtn">▶</button>
+        </div>
+        <audio id="audioElement" preload="metadata">
+            <source src="Fluss_thorsten05_01_xtts.wav" type="audio/wav">
+        </audio>
+
+        <div class="flood-control" id="floodControl">
+            <h3>
+                Hochwasserzonen
+                <span class="close-btn" id="floodClose">&times;</span>
+            </h3>
+            <label><input type="radio" name="hqzone" value="none" checked> Keine Anzeige</label>
+            <label><input type="radio" name="hqzone" value="hq30"> <span class="hq-color" style="background:rgba(100,180,255,0.7)"></span> HQ30 (30-jährlich)</label>
+            <label><input type="radio" name="hqzone" value="hq100"> <span class="hq-color" style="background:rgba(0,50,180,0.7)"></span> HQ100 (100-jährlich)</label>
+            <label><input type="radio" name="hqzone" value="hq300"> <span class="hq-color" style="background:rgba(230,200,0,0.7)"></span> HQ300 (300-jährlich)</label>
+            <div style="margin-top:10px;">
+                <button id="hqInfoToggle" style="background:#1a3a5c; color:#7ec8e3; border:1px solid #7ec8e3; border-radius:6px; padding:5px 12px; font-size:12px; cursor:pointer; width:100%;">Was bedeutet HQ30 / HQ100 / HQ300?</button>
+                <div id="hqInfoBox" style="display:none; margin-top:8px; padding:8px 10px; background:#0d1b2a; border-radius:6px; font-size:11px; color:#b0b8c4; line-height:1.6;">
+                    <strong style="color:#5cc8f0;">HQ = Hochwasser-Jährlichkeit</strong><br>
+                    Die Zahl gibt an, wie selten ein Hochwasser statistisch auftritt:<br><br>
+                    <span class="hq-color" style="background:rgba(100,180,255,0.7)"></span> <strong>HQ30</strong> — Tritt im Schnitt alle 30 Jahre auf. Häufigstes Szenario, kleinste Fläche.<br><br>
+                    <span class="hq-color" style="background:rgba(0,50,180,0.7)"></span> <strong>HQ100</strong> — Tritt im Schnitt alle 100 Jahre auf. Bemessungshochwasser für Schutzbauten in Österreich. Das Hochwasser 2005 in Vorarlberg entsprach ungefähr einem HQ100.<br><br>
+                    <span class="hq-color" style="background:rgba(230,200,0,0.7)"></span> <strong>HQ300</strong> — Extremszenario, tritt im Schnitt alle 300 Jahre auf. Größte Überflutungsfläche.<br><br>
+                    <strong style="color:#e74c3c;">Wichtig:</strong> „Alle 100 Jahre" heißt nicht, dass es nur einmal pro Jahrhundert passiert — es kann jederzeit auftreten. Die Wahrscheinlichkeit liegt bei 1% pro Jahr.
+                </div>
+            </div>
+            <div class="legend-hint">
+                Offizielle Überflutungsflächen des Landes Vorarlberg (VOGIS).
+            </div>
+        </div>
+
+    <!-- Leaflet JS from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+    <script>
+    window.addEventListener('load', function() {
+        // Initialize map
+        var map = L.map('map', {
+            center: [47.1, 9.85],
+            zoom: 11,
+            minZoom: 9,
+            maxZoom: 16,
+            zoomControl: true,
+            attributionControl: true
+        });
+
+        // Add zoom control at top-right
+        map.zoomControl.setPosition('topright');
+
+        // Basemap layers
+        var darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+            attribution: '© CARTO',
+            maxZoom: 19
+        });
+
+        var terrainLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenTopoMap',
+            maxZoom: 17
+        });
+
+        var satLayer = L.tileLayer('https://mapsneu.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{z}/{y}/{x}.jpeg', {
+            attribution: '© basemap.at',
+            maxZoom: 18
+        });
+
+        // Add default layer
+        darkLayer.addTo(map);
+
+        // Layer control
+        var baseLayers = {
+            'Dunkel': darkLayer,
+            'Gelände': terrainLayer,
+            'Orthofoto': satLayer
+        };
+
+        L.control.layers(baseLayers, {}, {
+            position: 'topright',
+            collapsed: true
+        }).addTo(map);
+
+        // Create a custom pane for flood layers ABOVE the basemap tiles
+        map.createPane('floodPane');
+        map.getPane('floodPane').style.zIndex = 450;
+
+        // WMS Flood zone layers from VOGIS (server-styled)
+        var wmsBaseUrl = 'https://vogis.cnv.at/geoserver/vogis/wms';
+
+        var floodLayers = {
+            hq30: L.tileLayer.wms(wmsBaseUrl, {
+                layers: 'hq30_gesamt',
+                transparent: true,
+                format: 'image/png',
+                opacity: 0.7,
+                pane: 'floodPane',
+                attribution: '© Land Vorarlberg / VOGIS'
+            }),
+            hq100: L.tileLayer.wms(wmsBaseUrl, {
+                layers: 'hq100_gesamt',
+                transparent: true,
+                format: 'image/png',
+                opacity: 0.7,
+                pane: 'floodPane',
+                attribution: '© Land Vorarlberg / VOGIS'
+            }),
+            hq300: L.tileLayer.wms(wmsBaseUrl, {
+                layers: 'hq300_gesamt',
+                transparent: true,
+                format: 'image/png',
+                opacity: 0.7,
+                pane: 'floodPane',
+                attribution: '© Land Vorarlberg / VOGIS'
+            })
+        };
+
+        var activeFloodLayer = null;
+
+        // Flood control panel logic
+        var floodPanel = document.getElementById('floodControl');
+        var floodClose = document.getElementById('floodClose');
+
+        function showFloodPanel() {
+            floodPanel.classList.add('visible');
+        }
+
+        function hideFloodPanel() {
+            floodPanel.classList.remove('visible');
+            // Remove active layer
+            if (activeFloodLayer) {
+                map.removeLayer(activeFloodLayer);
+                activeFloodLayer = null;
+            }
+            // Reset radio
+            document.querySelector('input[name="hqzone"][value="none"]').checked = true;
+        }
+
+        floodClose.addEventListener('click', hideFloodPanel);
+
+        // HQ Info toggle button
+        document.getElementById('hqInfoToggle').addEventListener('click', function() {
+            var box = document.getElementById('hqInfoBox');
+            if (box.style.display === 'none') {
+                box.style.display = 'block';
+                this.textContent = 'Erklärung ausblenden';
+            } else {
+                box.style.display = 'none';
+                this.textContent = 'Was bedeutet HQ30 / HQ100 / HQ300?';
+            }
+        });
+
+        document.querySelectorAll('input[name="hqzone"]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                // Remove current flood layer
+                if (activeFloodLayer) {
+                    map.removeLayer(activeFloodLayer);
+                    activeFloodLayer = null;
+                }
+                // Add selected
+                if (this.value !== 'none' && floodLayers[this.value]) {
+                    activeFloodLayer = floodLayers[this.value];
+                    activeFloodLayer.addTo(map);
+                }
+            });
+        });
+
+        // Styling functions
+        function getIllStyle() {
+            return {
+                color: '#5cc8f0',
+                weight: 4,
+                opacity: 0.9,
+                lineCap: 'round',
+                lineJoin: 'round'
+            };
+        }
+
+        function getTributaryStyle() {
+            return {
+                color: '#4a9fd6',
+                weight: 2.5,
+                opacity: 0.8,
+                lineCap: 'round',
+                lineJoin: 'round'
+            };
+        }
+
+        // Ill river data (coordinates converted from [lon,lat] to [lat,lon])
+        var illCoordinates = [
+            [46.9367, 10.0585], [46.9383, 10.0593], [46.9392, 10.059], [46.9401, 10.0586], [46.9414, 10.0591],
+            [46.9421, 10.06], [46.9416, 10.0617], [46.9428, 10.063], [46.9436, 10.0643], [46.9448, 10.0647],
+            [46.9461, 10.0653], [46.9468, 10.066], [46.9472, 10.0665], [46.9481, 10.0673], [46.9489, 10.0678],
+            [46.9496, 10.0689], [46.9502, 10.0691], [46.951, 10.0693], [46.9514, 10.07], [46.9527, 10.0712],
+            [46.9543, 10.0726], [46.9561, 10.0734], [46.957, 10.0731], [46.9585, 10.0734], [46.9599, 10.0742],
+            [46.9608, 10.0749], [46.9619, 10.075], [46.9633, 10.0753], [46.9642, 10.0748], [46.9646, 10.0745],
+            [46.9651, 10.0736], [46.9657, 10.0716], [46.9663, 10.0699], [46.9664, 10.0682], [46.9666, 10.0666],
+            [46.9667, 10.0639], [46.9673, 10.0625], [46.9682, 10.0602], [46.969, 10.0574], [46.9697, 10.0557],
+            [46.9699, 10.0551], [46.9706, 10.0515], [46.9713, 10.0502], [46.972, 10.0489], [46.9732, 10.0482],
+            [46.9737, 10.0464], [46.9742, 10.0444], [46.9759, 10.0418], [46.9773, 10.0385], [46.9783, 10.0354],
+            [46.9788, 10.034], [46.9802, 10.0332], [46.9819, 10.0327], [46.9824, 10.0313], [46.9829, 10.0303],
+            [46.9839, 10.0295], [46.9843, 10.0275], [46.9848, 10.0268], [46.9852, 10.0256], [46.9864, 10.0254],
+            [46.9877, 10.0246], [46.9891, 10.0235], [46.9905, 10.0225], [46.9922, 10.0198], [46.9929, 10.018],
+            [46.9936, 10.0159], [46.9944, 10.0145], [46.9953, 10.0126], [46.9963, 10.0109], [46.9975, 10.0097],
+            [46.9985, 10.0076], [47.0005, 10.0062], [47.0023, 10.0051], [47.0035, 10.0038], [47.0047, 10.0019],
+            [47.0056, 10.0006], [47.0064, 9.9995], [47.0074, 9.9986], [47.0089, 9.9966], [47.0097, 9.9942],
+            [47.0105, 9.9925], [47.0121, 9.9913], [47.0131, 9.9908], [47.0141, 9.9899], [47.0143, 9.9879],
+            [47.0154, 9.9871], [47.0164, 9.9849], [47.0168, 9.9829], [47.0168, 9.9807], [47.0175, 9.9788],
+            [47.0179, 9.9771], [47.0185, 9.9742], [47.0184, 9.9709], [47.0185, 9.9692], [47.0196, 9.9686],
+            [47.0207, 9.9666], [47.0217, 9.9656], [47.0238, 9.9652], [47.0254, 9.9642], [47.0261, 9.9622],
+            [47.0274, 9.9603], [47.0284, 9.9579], [47.0291, 9.956], [47.0304, 9.954], [47.0321, 9.9522],
+            [47.0333, 9.9513], [47.0347, 9.9503], [47.0366, 9.9486], [47.0381, 9.9458], [47.0391, 9.9438],
+            [47.0416, 9.9441], [47.0427, 9.9445], [47.0438, 9.944], [47.0449, 9.9435], [47.0466, 9.943],
+            [47.0487, 9.9424], [47.0517, 9.9414], [47.0538, 9.9407], [47.0557, 9.9401], [47.0568, 9.9387],
+            [47.0581, 9.9376], [47.0587, 9.9361], [47.0599, 9.9342], [47.061, 9.9343], [47.0621, 9.9334],
+            [47.0634, 9.9324], [47.0647, 9.9312], [47.0663, 9.9285], [47.0673, 9.9261], [47.0682, 9.9239],
+            [47.0691, 9.9213], [47.0701, 9.9189], [47.0713, 9.9161], [47.0724, 9.914], [47.0737, 9.9118],
+            [47.0755, 9.9091], [47.0765, 9.9073], [47.0775, 9.905], [47.0783, 9.9034], [47.0795, 9.9019],
+            [47.0803, 9.8987], [47.0821, 9.8952], [47.083, 9.8927], [47.0836, 9.891], [47.0843, 9.8901],
+            [47.085, 9.888], [47.0858, 9.8865], [47.0876, 9.8834], [47.0895, 9.8798], [47.0922, 9.8755],
+            [47.0938, 9.873], [47.0959, 9.8696], [47.0978, 9.8668], [47.1004, 9.8658], [47.1023, 9.865],
+            [47.1053, 9.8648], [47.1073, 9.864], [47.1087, 9.863], [47.1121, 9.8612], [47.1138, 9.8606],
+            [47.1158, 9.8598], [47.1169, 9.8573], [47.1184, 9.8548], [47.1204, 9.8552], [47.1218, 9.8559],
+            [47.1235, 9.8559], [47.1253, 9.8571], [47.1268, 9.8578], [47.1284, 9.8576], [47.1295, 9.8569],
+            [47.1307, 9.8553], [47.1314, 9.8529], [47.1328, 9.848], [47.1335, 9.8459], [47.1331, 9.8427],
+            [47.1335, 9.8395], [47.1351, 9.8364], [47.1368, 9.8328], [47.1381, 9.831], [47.1405, 9.8286],
+            [47.1462, 9.8224], [47.1527, 9.8157], [47.155, 9.8092], [47.1579, 9.8078], [47.1589, 9.8071],
+            [47.1608, 9.8018], [47.1654, 9.7926], [47.1679, 9.789], [47.1706, 9.7838], [47.1736, 9.7776],
+            [47.1741, 9.7732], [47.1752, 9.7624], [47.1754, 9.7565], [47.1762, 9.7491], [47.1767, 9.743],
+            [47.1771, 9.7397], [47.1776, 9.7369], [47.1787, 9.7341], [47.1814, 9.7283], [47.1849, 9.7225],
+            [47.1895, 9.7167], [47.1921, 9.7135], [47.1944, 9.7096], [47.1951, 9.7068], [47.1955, 9.7027],
+            [47.1959, 9.6988], [47.1962, 9.6957], [47.1968, 9.6929], [47.1972, 9.691], [47.1981, 9.6879],
+            [47.1991, 9.6843], [47.1995, 9.6827], [47.2002, 9.6797], [47.2011, 9.6771], [47.2037, 9.6725],
+            [47.2058, 9.6696], [47.2087, 9.6662], [47.2124, 9.6618], [47.218, 9.6545], [47.2199, 9.6521],
+            [47.2225, 9.6476], [47.2245, 9.6439], [47.2258, 9.6411], [47.2259, 9.636], [47.2256, 9.6276],
+            [47.227, 9.6202], [47.2277, 9.6123], [47.2286, 9.6064], [47.2301, 9.6047], [47.231, 9.6031],
+            [47.2325, 9.5996], [47.2355, 9.5955], [47.2374, 9.5925], [47.2377, 9.5911], [47.2386, 9.5906],
+            [47.24, 9.5905], [47.249, 9.5848], [47.2566, 9.5807], [47.264, 9.5766], [47.2807, 9.5676],
+            [47.2942, 9.5573], [47.2956, 9.5571], [47.2968, 9.5575], [47.3002, 9.5592]
+        ];
+
+        // Tributary data (converted from [lon,lat] to [lat,lon])
+        var saminaCoordinates = [
+            [47.1464, 9.5817], [47.1491, 9.5821], [47.1519, 9.5829], [47.1555, 9.5841], [47.1603, 9.5883],
+            [47.1633, 9.5905], [47.1656, 9.5923], [47.168, 9.5937], [47.1704, 9.5956], [47.1728, 9.5972],
+            [47.1757, 9.5973], [47.1777, 9.5986], [47.1815, 9.6023], [47.1835, 9.604], [47.1864, 9.6042],
+            [47.1896, 9.6026], [47.192, 9.6044], [47.1936, 9.6042], [47.1959, 9.605], [47.198, 9.6058],
+            [47.2001, 9.6073], [47.2017, 9.61], [47.2027, 9.6104], [47.2044, 9.612], [47.2056, 9.6125],
+            [47.2063, 9.6147], [47.2067, 9.6166], [47.2087, 9.6183], [47.2102, 9.6215], [47.2112, 9.6237],
+            [47.212, 9.6274], [47.2142, 9.628], [47.2169, 9.6301], [47.2205, 9.6298], [47.2235, 9.6289],
+            [47.2254, 9.6269]
+        ];
+
+        var lutzCoordinates = [
+            [47.2439, 10.014], [47.245, 10.0109], [47.2468, 10.0079], [47.2475, 10.0052], [47.2483, 10.0011],
+            [47.2485, 9.9979], [47.2487, 9.9938], [47.2483, 9.9871], [47.246, 9.9805], [47.2451, 9.9742],
+            [47.246, 9.967], [47.245, 9.9618], [47.2437, 9.9569], [47.2431, 9.9505], [47.2427, 9.9462],
+            [47.2422, 9.9436], [47.2422, 9.9411], [47.2419, 9.9368], [47.2415, 9.934], [47.2398, 9.9289],
+            [47.2398, 9.923], [47.2375, 9.9182], [47.2367, 9.9123], [47.2373, 9.9077], [47.2359, 9.9019],
+            [47.2351, 9.8971], [47.234, 9.893], [47.2324, 9.8883], [47.2294, 9.8843], [47.2275, 9.8774],
+            [47.2252, 9.8728], [47.2242, 9.8683], [47.2234, 9.8637], [47.2222, 9.8584], [47.2216, 9.8521],
+            [47.2205, 9.8425], [47.2173, 9.8366], [47.2163, 9.8319], [47.2155, 9.8274], [47.2149, 9.8231],
+            [47.2136, 9.8184], [47.2134, 9.8139], [47.2128, 9.8106], [47.2119, 9.8069], [47.2119, 9.7998],
+            [47.2101, 9.7955], [47.2071, 9.7906], [47.204, 9.786], [47.2011, 9.7815], [47.1967, 9.7742],
+            [47.1905, 9.7635], [47.1839, 9.7554], [47.1802, 9.7455], [47.1784, 9.735]
+        ];
+
+        var alfenzCoordinates = [
+            [47.1375, 10.1564], [47.1361, 10.1516], [47.136, 10.149], [47.1354, 10.1427], [47.1343, 10.1381],
+            [47.134, 10.1301], [47.1324, 10.1252], [47.1307, 10.1209], [47.1313, 10.1169], [47.1305, 10.11],
+            [47.1294, 10.1038], [47.1294, 10.0991], [47.1305, 10.0942], [47.13, 10.0872], [47.1309, 10.0792],
+            [47.1305, 10.0677], [47.1286, 10.0609], [47.1289, 10.0575], [47.1285, 10.0532], [47.1282, 10.0498],
+            [47.1275, 10.0436], [47.1274, 10.038], [47.1274, 10.0341], [47.1275, 10.0314], [47.1261, 10.0272],
+            [47.1257, 10.0239], [47.1259, 10.0211], [47.1254, 10.0184], [47.1251, 10.0128], [47.1245, 10.0075],
+            [47.1233, 10.0009], [47.1228, 9.9925], [47.1239, 9.9849], [47.1273, 9.9774], [47.1288, 9.9701],
+            [47.1285, 9.9615], [47.1307, 9.9569], [47.1341, 9.9491], [47.1363, 9.94], [47.138, 9.9296],
+            [47.1394, 9.9262], [47.1404, 9.9239], [47.1411, 9.9201], [47.1423, 9.9169], [47.1427, 9.912],
+            [47.1421, 9.908], [47.1426, 9.9027], [47.1435, 9.8948], [47.1437, 9.8887], [47.1438, 9.8829],
+            [47.1427, 9.876], [47.1431, 9.8673], [47.1418, 9.858], [47.1388, 9.8465], [47.1355, 9.8388],
+            [47.1348, 9.8369]
+        ];
+
+        var litzCoordinates = [
+            [47.058, 10.1398], [47.0518, 10.1399], [47.0493, 10.1327], [47.0485, 10.1205], [47.0474, 10.1126],
+            [47.0475, 10.1037], [47.0469, 10.0943], [47.0484, 10.0881], [47.0492, 10.08], [47.0495, 10.0678],
+            [47.0528, 10.0569], [47.0551, 10.0484], [47.0565, 10.0416], [47.0572, 10.0306], [47.0591, 10.0239],
+            [47.0618, 10.0223], [47.0651, 10.0244], [47.0682, 10.0243], [47.0738, 10.0239], [47.0787, 10.0218],
+            [47.0834, 10.0168], [47.086, 10.0113], [47.0875, 10.0063], [47.0889, 10.0012], [47.0915, 9.9936],
+            [47.0931, 9.984], [47.0953, 9.9741], [47.0952, 9.966], [47.0956, 9.9552], [47.0929, 9.9471],
+            [47.089, 9.9374], [47.0836, 9.9282], [47.0814, 9.9188], [47.0792, 9.9027]
+        ];
+
+        var frutzCoordinates = [
+            [47.2544, 9.8254], [47.2585, 9.8204], [47.2623, 9.8137], [47.2631, 9.8035], [47.2592, 9.7915],
+            [47.256, 9.7759], [47.2551, 9.7631], [47.2541, 9.7493], [47.2528, 9.7403], [47.257, 9.7267],
+            [47.2602, 9.7147], [47.2609, 9.7027], [47.2607, 9.7018], [47.2614, 9.7014], [47.2615, 9.7003],
+            [47.2614, 9.6991], [47.262, 9.6985], [47.2625, 9.6979], [47.263, 9.6975], [47.2627, 9.6967],
+            [47.2619, 9.6963], [47.2614, 9.6958], [47.2616, 9.695], [47.2616, 9.6944], [47.2618, 9.6937],
+            [47.262, 9.693], [47.2626, 9.6925], [47.264, 9.6916], [47.2647, 9.6884], [47.266, 9.6803],
+            [47.27, 9.6711], [47.2749, 9.6593], [47.3009, 9.6182], [47.318, 9.5886]
+        ];
+
+        // Add Ill river with glow effect
+        var illGlow = L.polyline(illCoordinates, {
+            color: '#1a6da0',
+            weight: 8,
+            opacity: 0.3,
+            lineCap: 'round',
+            lineJoin: 'round'
+        }).addTo(map);
+
+        var ill = L.polyline(illCoordinates, getIllStyle()).addTo(map);
+
+        // Hover effects for Ill
+        ill.on('mouseover', function() {
+            this.setStyle({ weight: 6 });
+        });
+        ill.on('mouseout', function() {
+            this.setStyle({ weight: 4 });
+        });
+
+        // Click popup for Ill
+        ill.bindPopup(function() {
+            return '<h3>Die Ill – Hauptfluss Vorarlbergs</h3><p><strong>Länge:</strong> 72 km · <strong>Einzugsgebiet:</strong> 1.281 km²<br><strong>Mittlerer Abfluss:</strong> 65,5 m³/s (Pegel Gisingen)<br><strong>Höhenunterschied:</strong> ca. 1.870 m (Quelle → Mündung)</p><p style="margin-top:6px">Die Ill entwässert Teile von Rätikon, Silvretta, Verwall und Lechquellengebirge. Sie durchfließt das Montafon, den Walgau und Feldkirch, bevor sie bei Meiningen in den Alpenrhein mündet. Zahlreiche Speicherkraftwerke der illwerke vkw nutzen ihr Wasser zur Stromerzeugung.</p>';
+        });
+        ill.on('click', function() {
+            this.openPopup();
+        });
+
+        // Add tributaries
+        var tributaryData = [
+            { coords: saminaCoordinates, name: 'Samina', length: '14 km', desc: 'Kommt aus dem Saminatal an der Grenze zu Liechtenstein und mündet bei Frastanz in die Ill. Ihr Lauf bildet teilweise die Staatsgrenze zu Liechtenstein.' },
+            { coords: lutzCoordinates, name: 'Lutz', length: '22 km', desc: 'Entwässert das Große Walsertal — einen UNESCO-Biosphärenpark. Mündet zwischen Nenzing und Nüziders in die Ill. 2005 trug die Lutz erheblich zum Hochwasser im Walgau bei.' },
+            { coords: alfenzCoordinates, name: 'Alfenz', length: '28 km', desc: 'Längster Nebenfluss der Ill. Fließt vom Arlberg durch das Klostertal (Stuben, Langen, Klösterle, Dalaas, Braz) und mündet bei Lorüns in die Ill.' },
+            { coords: litzCoordinates, name: 'Litz', length: '24 km', desc: 'Kommt aus dem Silvretta-Gebiet und mündet bei Schruns in die Ill. Durchfließt das Gargellental und das Silvrettatal.' },
+            { coords: frutzCoordinates, name: 'Frutz', length: '15 km', desc: 'Kommt aus dem Laternsertal und mündet bei Rankweil in die Ill. Bekannt für die eindrucksvolle Frutzschlucht. Ihr Unterlauf wurde im Rahmen von Renaturierungsprojekten ökologisch aufgewertet.' }
+        ];
+
+        tributaryData.forEach(function(tributary) {
+            var tributaryLine = L.polyline(tributary.coords, getTributaryStyle()).addTo(map);
+
+            tributaryLine.on('mouseover', function() {
+                this.setStyle({ weight: 4 });
+            });
+            tributaryLine.on('mouseout', function() {
+                this.setStyle({ weight: 2.5 });
+            });
+
+            tributaryLine.bindPopup(function() {
+                return '<h3>' + tributary.name + '</h3><p><strong>Länge:</strong> ' + tributary.length + '<br>' + tributary.desc + '</p>';
+            });
+            tributaryLine.on('click', function() {
+                this.openPopup();
+            });
+        });
+
+        // POI data with types — v3: korrigierte Positionen, vertiefte Inhalte
+        var poiData = [
+            { coords: [46.9367, 10.0585], icon: '💧', name: 'Quellgebiet der Ill', type: 'quelle', desc: 'Die Ill entspringt in der Silvrettagruppe auf über 2.000 m Höhe. Gespeist wird sie von Gletscherschmelze und Niederschlägen aus Silvretta, Rätikon und Verwall. Durch den Klimawandel ziehen sich die Gletscher zurück — das verändert langfristig die Wasserführung.' },
+            { coords: [46.9428, 10.063], icon: '⚡', name: 'Partenen – Vermuntwerk', type: 'ort', desc: 'Hier steht das Vermuntwerk (Baujahr 1930) — eines der ältesten Hochdruck-Speicherkraftwerke der illwerke vkw. Die Kraftwerksgruppe im Montafon (Vermunt, Rodund, Lünersee, Kops) nutzt das Gefälle der Ill und ihrer Zuflüsse. Bei Hochwasser 1999 und 2005 wurden die Speicher gezielt eingesetzt, um Flutwellen abzupuffern.' },
+            { coords: [46.9891, 10.0235], icon: '🏘️', name: 'Schruns – Montafon', type: 'ort', desc: 'Hauptort des Montafon. Die Ill fließt hier noch als typischer Gebirgsfluss mit starkem Gefälle und alpinem Charakter. Im Montafon entwässert die Ill ein Gebiet von rund 800 km² — bereits zwei Drittel ihres gesamten Einzugsgebiets.' },
+            { coords: [46.9975, 10.0097], icon: '⚡', name: 'Latschau – Lünerseewerk', type: 'ort', desc: 'Das Lünerseewerk (1954–1958) war bei seiner Eröffnung das leistungsstärkste Pumpspeicherkraftwerk der Welt. Der Lünersee liegt 974 m über der Kraftstation. Ein geplantes Lünerseewerk II soll bis zu 1.000 MW Leistung bringen.' },
+            { coords: [47.1295, 9.8569], icon: '🏙️', name: 'Bludenz – Fünf-Täler-Stadt', type: 'ort', desc: 'Fünf Täler treffen hier zusammen: Montafon, Klostertal, Brandnertal, Walgau und Großes Walsertal. Bei Lorüns mündet die Alfenz (vom Arlberg) in die Ill. Bludenz ist ein hydrologischer Knotenpunkt — hier vereinigen sich mehrere große Einzugsgebiete.' },
+            { coords: [47.1736, 9.7776], icon: '🌊', name: 'Walgau – Hochwasserzone', type: 'landschaft', action: 'flood', desc: 'Beim Jahrhunderthochwasser im August 2005 wurden die Walgau-Gemeinden Nenzing, Bludesch, Frastanz, Satteins und Göfis massiv überschwemmt. Die Ill erreichte am Pegel Gisingen bis zu 689 m³/s — über das 10-fache des normalen Abflusses.<br><br><strong style="color:#e74c3c">→ Hochwasserzonen einblenden:</strong> Nutze das Panel rechts unten, um offizielle Überflutungsflächen (HQ30/HQ100/HQ300) anzuzeigen.' },
+            { coords: [47.2355, 9.5955], icon: '🏰', name: 'Feldkirch – Kapfschlucht', type: 'ort', desc: 'Die Ill durchquert Feldkirch durch die enge Kapfschlucht. Bei einem HQ100-Hochwasser (820 m³/s) würden zwei Drittel der Innenstadt bis zu 3 m unter Wasser stehen. Deshalb wurde die Kapfschlucht 2023–2025 um 8 m aufgeweitet und 15.000 m³ Fels abgetragen — ein 24-Millionen-Euro-Projekt.' },
+            { coords: [47.2807, 9.5676], icon: '🦆', name: 'Illspitz – Naturschutzgebiet', type: 'landschaft', desc: 'Das Naturschutzgebiet Illspitz am Zusammenfluss von Ill und Rhein ist ein wertvolles Feuchtbiotop. Hier zeigt sich, wie ein naturnaher Flussmündungsbereich aussehen kann — Lebensraum für seltene Vogelarten, Amphibien und Fische.' },
+            { coords: [47.3002, 9.5592], icon: '🌊', name: 'Mündung in den Rhein', type: 'muendung', desc: 'Bei Meiningen mündet die Ill nach 72 km und 1.870 Höhenmetern in den Alpenrhein. Mit durchschnittlich 65,5 m³/s ist sie der mit Abstand größte Zufluss des Rheins in Vorarlberg. Das Kraftwerk Illspitz nutzt die letzten Meter Gefälle zur Stromerzeugung.' },
+            { coords: [47.0581, 9.9376], icon: '🔄', name: 'Renaturierung', type: 'landschaft', desc: 'Seit der Jahrtausendwende wurden in Vorarlberg über 40 Renaturierungsprojekte an Fließgewässern umgesetzt. An der Ill und ihren Zuflüssen wird die Flusssohle stabilisiert und gleichzeitig neuer Lebensraum für Wasserorganismen geschaffen. Die intensive Wasserkraftnutzung verursacht starke tägliche Pegelschwankungen — eine Herausforderung für die Ökologie.' },
+            { coords: [47.1690, 9.8010], icon: '🏘️', name: 'Nüziders', type: 'ort', desc: 'Nüziders liegt direkt an der Ill, kurz nach dem Austritt des Flusses aus dem Montafon in den Walgau. Beim Katastrophenhochwasser 1910 wurden beide Illbrücken bei Nüziders weggerissen. Die Gemeinde ist Gründungsmitglied des Wasserverbands Ill-Walgau (2009), der den gemeinsamen Hochwasserschutz von Bludenz bis Meiningen koordiniert. Heute informieren „Flussland Vorarlberg"-Tafeln in Nüziders über das Leben am Fluss.' },
+            { coords: [47.1850, 9.7080], icon: '🏘️', name: 'Nenzing', type: 'ort', desc: 'Im Gemeindegebiet von Nenzing mündet die Lutz — der Abfluss des UNESCO-Biosphärenparks Großes Walsertal — in die Ill. Nach dem verheerenden Hochwasser 1910 wurden umfangreiche Schutzbauten errichtet (abgeschlossen um 1930). Trotzdem wurde Nenzing 2005 erneut massiv überflutet. Seit 1984 steht hier das Walgauwerk der illwerke vkw, das die Ill zur Stromerzeugung nutzt.' },
+            { coords: [47.2010, 9.7280], icon: '🏘️', name: 'Bludesch', type: 'ort', desc: 'Die Ill bildet die natürliche Nordgrenze der Gemeinde Bludesch. Der Ort war Teil des historischen Lutzverbands, der den Hochwasserschutz im Bereich des Lutz-Zuflusses organisierte — 2009 abgelöst durch den Wasserverband Ill-Walgau. Beim Hochwasser 2005 wurde Bludesch durch Übertritte der Ill und der Lutz schwer getroffen. Die Gemeinde hat rund 2.500 Einwohner:innen.' },
+            { coords: [47.2180, 9.6310], icon: '🏘️', name: 'Frastanz', type: 'ort', desc: 'Bei Frastanz mündet die Samina — ein Grenzfluss zu Liechtenstein — in die Ill. Beim Hochwasser 2005 verursachten Sedimentablagerungen im Samina-Kanal massive Probleme, und das Illwasser drang in die Trafostation des E-Werks Frastanz ein. Die Marktgemeinde ist ein wichtiger Standort der Vorarlberger Energiewirtschaft und liegt dort, wo sich das Walgau nach Westen hin verengt.' },
+            { coords: [47.2230, 9.6560], icon: '🏘️', name: 'Satteins', type: 'ort', desc: 'Die Ill bildet die südwestliche Gemeindegrenze von Satteins. Das Dorf liegt am Fuß des Walserkamms auf 496 m Höhe und gehört geografisch bereits zum Walgau, administrativ aber zum Bezirk Feldkirch. Satteins ist eines der 12 Mitglieder des Wasserverbands Ill-Walgau, der die fast 30 km lange Ill-Strecke im Walgau gemeinsam schützt und saniert.' },
+            { coords: [47.2310, 9.6170], icon: '🏘️', name: 'Göfis', type: 'ort', desc: 'Göfis gilt als „Tor zum Walgau" und liegt am Übergang vom Rheintal ins Illtal. 842 erstmals als „Segavio" urkundlich erwähnt (keltisch für „Sieg/Stärke"). Das Siedlungsgebiet Schildried wurde 1999 und 2002 überflutet, beim Jahrhunderthochwasser 2005 traf es die Gemeinde erneut schwer. Göfis ist Mitglied im 2009 gegründeten Wasserverband Ill-Walgau.' }
+        ];
+
+        // Custom icon class
+        function createPOIIcon(emoji, type) {
+            return L.divIcon({
+                html: '<div class="poi-icon ' + type + '">' + emoji + '</div>',
+                iconSize: [38, 38],
+                iconAnchor: [19, 19],
+                popupAnchor: [0, -19],
+                className: 'custom-icon'
+            });
+        }
+
+        // Add POIs
+        poiData.forEach(function(poi) {
+            var marker = L.marker(poi.coords, {
+                icon: createPOIIcon(poi.icon, poi.type)
+            }).addTo(map);
+
+            marker.bindPopup(function() {
+                return '<h3>' + poi.name + '</h3><p>' + poi.desc + '</p>';
+            });
+
+            marker.on('click', function() {
+                this.openPopup();
+                // Show flood panel when clicking Hochwasser POI
+                if (poi.action === 'flood') {
+                    showFloodPanel();
+                    // Auto-select HQ100
+                    document.querySelector('input[name="hqzone"][value="hq100"]').checked = true;
+                    document.querySelector('input[name="hqzone"][value="hq100"]').dispatchEvent(new Event('change'));
+                }
+            });
+        });
+
+        // Adjust attribution
+        map.attributionControl.setPrefix('');
+
+        // ============================================
+        // FLOW ANIMATION — Partikel fließen entlang der Ill
+        // ============================================
+        var canvas = document.getElementById('flowCanvas');
+        var ctx = canvas.getContext('2d');
+        var flowActive = false;
+        var animationId = null;
+        var particles = [];
+        var PARTICLE_COUNT = 40;
+        var PARTICLE_SPEED = 0.0012; // Progress per frame (0–1 along path)
+        var pixelPath = []; // cached screen coordinates
+
+        // Resize canvas to match map container
+        function resizeCanvas() {
+            var mapEl = document.getElementById('map');
+            canvas.width = mapEl.clientWidth;
+            canvas.height = mapEl.clientHeight;
+        }
+
+        // Convert illCoordinates latlngs to pixel positions
+        function updatePixelPath() {
+            pixelPath = [];
+            for (var i = 0; i < illCoordinates.length; i++) {
+                var pt = map.latLngToContainerPoint(illCoordinates[i]);
+                pixelPath.push({ x: pt.x, y: pt.y });
+            }
+        }
+
+        // Calculate cumulative distances for even spacing along path
+        function getCumulativeDistances() {
+            var distances = [0];
+            for (var i = 1; i < pixelPath.length; i++) {
+                var dx = pixelPath[i].x - pixelPath[i-1].x;
+                var dy = pixelPath[i].y - pixelPath[i-1].y;
+                distances.push(distances[i-1] + Math.sqrt(dx*dx + dy*dy));
+            }
+            return distances;
+        }
+
+        // Get position along path at progress t (0–1)
+        function getPointAtProgress(t, distances) {
+            if (pixelPath.length < 2) return { x: 0, y: 0 };
+            var totalDist = distances[distances.length - 1];
+            var targetDist = t * totalDist;
+
+            for (var i = 1; i < distances.length; i++) {
+                if (distances[i] >= targetDist) {
+                    var segStart = distances[i-1];
+                    var segEnd = distances[i];
+                    var segLen = segEnd - segStart;
+                    var frac = segLen > 0 ? (targetDist - segStart) / segLen : 0;
+                    return {
+                        x: pixelPath[i-1].x + (pixelPath[i].x - pixelPath[i-1].x) * frac,
+                        y: pixelPath[i-1].y + (pixelPath[i].y - pixelPath[i-1].y) * frac
+                    };
+                }
+            }
+            return pixelPath[pixelPath.length - 1];
+        }
+
+        // Initialize particles with random spread along the path
+        function initParticles() {
+            particles = [];
+            for (var i = 0; i < PARTICLE_COUNT; i++) {
+                particles.push({
+                    progress: Math.random(), // 0–1 position along path
+                    speed: PARTICLE_SPEED * (0.6 + Math.random() * 0.8), // slight variation
+                    size: 2 + Math.random() * 2.5,
+                    opacity: 0.4 + Math.random() * 0.6
+                });
+            }
+        }
+
+        // Animation loop
+        function animateFlow() {
+            if (!flowActive) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            updatePixelPath();
+            var distances = getCumulativeDistances();
+
+            for (var i = 0; i < particles.length; i++) {
+                var p = particles[i];
+                p.progress += p.speed;
+                if (p.progress > 1) {
+                    p.progress -= 1; // loop back to start
+                    p.size = 2 + Math.random() * 2.5;
+                    p.opacity = 0.4 + Math.random() * 0.6;
+                }
+
+                var pos = getPointAtProgress(p.progress, distances);
+
+                // Draw glowing particle
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(92, 200, 240, ' + p.opacity + ')';
+                ctx.fill();
+
+                // Glow effect
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, p.size * 2.5, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(92, 200, 240, ' + (p.opacity * 0.15) + ')';
+                ctx.fill();
+            }
+
+            animationId = requestAnimationFrame(animateFlow);
+        }
+
+        // Toggle button
+        var flowToggle = document.getElementById('flowToggle');
+        flowToggle.addEventListener('click', function() {
+            flowActive = !flowActive;
+            this.classList.toggle('active', flowActive);
+
+            if (flowActive) {
+                resizeCanvas();
+                initParticles();
+                animateFlow();
+            } else {
+                if (animationId) cancelAnimationFrame(animationId);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        });
+
+        // Recalculate on map move/zoom
+        map.on('move zoom resize', function() {
+            if (flowActive) {
+                resizeCanvas();
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (flowActive) resizeCanvas();
+        });
+
+        // ============================================
+        // AUDIO PLAYER — "Was ist ein Flusssystem?"
+        // ============================================
+        var audio = document.getElementById('audioElement');
+        var playBtn = document.getElementById('audioPlayBtn');
+        var progressBar = document.getElementById('audioProgress');
+        var isPlaying = false;
+
+        playBtn.addEventListener('click', function() {
+            if (isPlaying) {
+                audio.pause();
+                playBtn.innerHTML = '▶';
+                playBtn.classList.remove('playing');
+                isPlaying = false;
+            } else {
+                audio.play().then(function() {
+                    playBtn.innerHTML = '⏸';
+                    playBtn.classList.add('playing');
+                    isPlaying = true;
+                }).catch(function(err) {
+                    console.log('Audio play error:', err);
+                });
+            }
+        });
+
+        audio.addEventListener('timeupdate', function() {
+            if (audio.duration) {
+                var percent = (audio.currentTime / audio.duration) * 100;
+                progressBar.style.width = percent + '%';
+            }
+        });
+
+        audio.addEventListener('ended', function() {
+            playBtn.innerHTML = '▶';
+            playBtn.classList.remove('playing');
+            isPlaying = false;
+            progressBar.style.width = '0%';
+        });
+    });
+    </script>
+</body>
+</html>
