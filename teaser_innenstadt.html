@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ein Spaziergang durch Dornbirns Mitte – i.appear</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf8f5;
+  --paper:#fffdfa;
+  --ink:#2a2420;
+  --muted:#8a7e72;
+  --hairline:#e0d9d0;
+  --accent:#A64E3B;
+  --accent-soft:#F4E5DE;
+}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:'Libre Baskerville','Georgia',serif;min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:780px;margin:0 auto;padding:0}
+.header{padding:40px 28px 28px;text-align:center;border-bottom:1px solid var(--hairline)}
+.logo{display:block;margin:0 auto 22px;height:40px;width:auto;color:var(--ink)}
+.kicker{font-family:'Source Sans 3',sans-serif;font-size:11px;font-weight:700;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+.header h1{font-size:34px;font-weight:700;line-height:1.18;margin-bottom:14px;letter-spacing:-.2px}
+.header .sub{font-family:'Source Sans 3',sans-serif;font-size:14px;color:var(--muted);letter-spacing:.2px}
+.intro{padding:36px 28px 8px;text-align:center}
+.intro p{font-family:'Source Sans 3',sans-serif;font-size:15px;color:#5a5048;max-width:520px;margin:0 auto;line-height:1.65}
+.thread{position:relative;padding:32px 28px 40px}
+.thread::before{content:"";position:absolute;left:50%;top:0;bottom:80px;width:2px;background:linear-gradient(to bottom,transparent 0%,var(--accent-soft) 14px,var(--accent-soft) calc(100% - 14px),transparent);transform:translateX(-1px);z-index:0}
+.tile{position:relative;display:grid;grid-template-columns:1fr;gap:0;margin:26px 0 48px;z-index:1}
+.tile-num{position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-family:'Source Sans 3',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--muted);background:var(--bg);padding:4px 12px;border-radius:20px;border:1px solid var(--hairline);z-index:3}
+.tile-img{position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;border-radius:4px;background:#ebe6df;box-shadow:0 8px 28px -12px rgba(42,36,32,.28),0 2px 6px rgba(42,36,32,.06);margin-top:22px}
+.tile-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .6s cubic-bezier(.2,.6,.2,1)}
+.tile:hover .tile-img img{transform:scale(1.03)}
+.tile-img-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:28px}
+.tile-credit{position:absolute;bottom:6px;right:10px;font-family:'Source Sans 3',sans-serif;font-size:9px;color:rgba(255,253,250,.92);text-shadow:0 1px 3px rgba(0,0,0,.55);letter-spacing:.3px}
+.tile-body{padding:18px 4px 0;text-align:center}
+.tile-title{font-size:24px;font-weight:700;line-height:1.25;margin-bottom:10px;letter-spacing:-.1px}
+.tile-teaser{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-size:15.5px;color:#4a4038;line-height:1.6;margin-bottom:16px;max-width:520px;margin-left:auto;margin-right:auto}
+.tile-cta{display:inline-flex;align-items:center;gap:8px;font-family:'Source Sans 3',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink);text-decoration:none;padding:10px 18px;border:1.5px solid var(--ink);border-radius:24px;transition:all .2s ease;background:transparent}
+.tile-cta:hover{background:var(--ink);color:var(--bg);border-color:var(--ink);transform:translateY(-1px);box-shadow:0 4px 12px rgba(42,36,32,.18)}
+.tile-cta svg{transition:transform .2s}
+.tile-cta:hover svg{transform:translateX(2px)}
+.footer{padding:24px 28px 56px;text-align:center;border-top:1px solid var(--hairline);background:var(--accent-soft)}
+.footer p{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-size:15px;color:#4a4038;margin-bottom:18px;line-height:1.55}
+.footer-cta{display:inline-flex;align-items:center;gap:10px;font-family:'Source Sans 3',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:#faf8f5;background:var(--accent);padding:14px 28px;border-radius:28px;text-decoration:none;transition:all .25s;box-shadow:0 4px 14px -4px rgba(42,36,32,.3)}
+.footer-cta:hover{transform:translateY(-2px);box-shadow:0 8px 20px -4px rgba(42,36,32,.35)}
+@media(min-width:640px){
+  .tile{grid-template-columns:1fr 1fr;gap:32px;align-items:center;margin:40px 0 60px}
+  .tile:nth-child(odd) .tile-img{order:1}
+  .tile:nth-child(odd) .tile-body{order:2}
+  .tile:nth-child(even) .tile-img{order:2}
+  .tile:nth-child(even) .tile-body{order:1}
+  .tile-img{margin-top:0;aspect-ratio:4/3}
+  .tile-body{text-align:left;padding:0}
+  .tile-teaser{margin-left:0;margin-right:0}
+  .tile-num{left:0;top:-18px;transform:none}
+  .tile:nth-child(even) .tile-num{left:auto;right:0}
+  .thread::before{display:none}
+}
+@media(min-width:640px){
+  .header{padding:56px 28px 36px}
+  .header h1{font-size:46px}
+  .logo{height:50px;margin-bottom:28px}
+  .intro p{font-size:16.5px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="header">
+    <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 123.56 233.11" aria-label="i.appear" role="img">
+<path d="M37.54,233.11v-14.79c4.75-.91,10.4-1.83,15.88-2.19v-55.86c-4.38-.73-10.59-1.46-15.88-1.83v-14.6c11.5-1.46,25.56-2.01,39.06-1.64v73.93c5.11.36,10.4,1.28,14.79,2.19v14.79h-53.85Z"/>
+<path d="M61.69,75.15c-8,0-14.37-6.37-14.37-14.19s6.37-14.01,14.37-14.01,14.55,6.18,14.55,14.01-6.55,14.19-14.55,14.19Z"/>
+<circle cx="61.78" cy="61.78" r="50.28" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="23"/>
+</svg>
+    <div class="kicker">Rundgang · Innenstadt erleben</div>
+    <h1>Ein Spaziergang durch Dornbirns Mitte</h1>
+    <p class="sub">11 Stationen · rund 90 Minuten · Audioguide in Deutsch und Englisch</p>
+  </header>
+
+  <section class="intro">
+    <p>Ein Vorgeschmack. Scroll dich durch die Stationen — und wenn dich eine neugierig macht, hörst du sie direkt in der App.</p>
+  </section>
+
+  <section class="thread">
+    
+    <article class="tile" data-idx="0">
+      <div class="tile-num">01</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/0x0/ce4030c483/s01-marktplatz-blick-st-martin.jpg" alt="Historisches Foto: Blick von der Kirche St. Martin über den Marktplatz/Rathausplatz. Zeigt das Lorenz-Rhomberg-Haus im Kontext. Zwischen 1960 und 1965.">
+        <div class="tile-credit">© Stadtarchiv Dornbirn</div>
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Museum &amp; Archiv</h2>
+        <p class="tile-teaser">Ein Haus, über 220 Jahre alt. Sechs Generationen zweier Familien — und heute das Gedächtnis dieser Stadt.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/innenstadt-erleben/stadtmuseum-stadtarchiv" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="1">
+      <div class="tile-num">02</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/7255x5071/08341ddfcc/64723-messegelande-dornbirn-jahngasse.jpg" alt="Jahngasse/alte Stadthalle">
+        
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Jahngasse/alte Stadthalle</h2>
+        <p class="tile-teaser">Ein versteckter Zusatztipp: die erste feste Messehalle Dornbirns — 1953 in nur sieben Monaten hochgezogen.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/innenstadt-erleben/jahngasse-alte-stadthalle" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="2">
+      <div class="tile-num">03</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/9976x7408/0e4e91c1df/6730-vom-haus-marktplatz-11-aus-fotograf-marktsituation-herbstmarkt-1897.jpg" alt="Handel &amp; Markt ">
+        
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Handel &amp; Markt </h2>
+        <p class="tile-teaser">Häuser, die den Marktplatz schon kannten, als sich hier noch Autos, Fuhrwerke und die Straßenbahn die Fahrbahn teilten.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/innenstadt-erleben/feuerstein-lugerhaus" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="3">
+      <div class="tile-num">04</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/0x0/2c1181e9d4/s03-altes-haus-postkarte.jpg" alt="Historische Postkarte mit dem Roten Haus am Marktplatz.">
+        <div class="tile-credit">© Vorarlberger Landesbibliothek</div>
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Rotes Haus</h2>
+        <p class="tile-teaser">Das Wahrzeichen Dornbirns. 1639 von einem Schweizer Einwanderer errichtet.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/innenstadt-erleben/rotes-haus" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="4">
+      <div class="tile-num">05</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/0x0/e2ac746e82/s04-kirche-st-martin-beer.jpg" alt="Historisches Foto der Kirche St. Martin in Dornbirn. Sammlung Franz Beer.">
+        <div class="tile-credit">© Stadtarchiv Dornbirn</div>
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Kirche St. Martin</h2>
+        <p class="tile-teaser">Auf den ersten Blick etwas verwunderlich — und bei genauerem Hinsehen voller Überraschungen.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/innenstadt-erleben/kirche-st-martin" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="5">
+      <div class="tile-num">06</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/6573050/dfa1eb0cd4/1012-muhlebacherstrasse-29-vor-1929.jpg" alt="Mühlebacherstraße 29, vor 1929">
+        <div class="tile-credit">© Stadtarchiv Dornbirn</div>
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Rheintalhaus</h2>
+        <p class="tile-teaser">Um 1700 gebaut. Seit über 300 Jahren kaum verändert.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/innenstadt-erleben/rheintalhaus-architektur" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="6">
+      <div class="tile-num">07</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/0x0/149f03bb6c/s06-messehochhaus-beer.jpg" alt="Historisches Foto des Messehochhauses in Dornbirn. Sammlung Franz Beer.">
+        <div class="tile-credit">© Stadtarchiv Dornbirn</div>
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Messehochhaus </h2>
+        <p class="tile-teaser">Heute Stadtmarkt, einmal Messehochhaus — dazwischen ein ganzes Jahrhundert.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/innenstadt-erleben/messehochhaus-stadtmarkt" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="7">
+      <div class="tile-num">08</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/1013727/92a35721fe/60517-668-eingang-der-ruschwerke.jpg" alt="Eingang der Rüschwerke">
+        <div class="tile-credit">© Stadtarchiv Dornbirn</div>
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Inatura</h2>
+        <p class="tile-teaser">Einmal war das eine Fabrik. Heute ein Naturmuseum.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/innenstadt-erleben/inatura" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="8">
+      <div class="tile-num">09</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/0x0/773a700147/s08-kapuzinerkloster-postkarte.jpg" alt="Historische Postkarte des Kapuzinerklosters in Dornbirn.">
+        <div class="tile-credit">© Vorarlberger Landesbibliothek</div>
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Kapuzinerkloster</h2>
+        <p class="tile-teaser">Mai 1892: Ein Landeshauptmann am Bett seiner Frau — und gleich nebenan entsteht ein Kapuzinerkloster.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/innenstadt-erleben/adolf-rhomberg-haus-kapuziner" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="9">
+      <div class="tile-num">10</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/6757x4924/d30999dba5/62851-01-1970-august-zumtobelhaus-1953-vlg-naturschau-leute-olz-backerei-altes-haus.jpg" alt="Marktstraße 33">
+        <div class="tile-credit">© Stadtarchiv Dornbirn</div>
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Marktstraße 33</h2>
+        <p class="tile-teaser">In diesem Haus standen einmal ausgestopfte Elche, Luchse und Bären.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/innenstadt-erleben/flatz-museum-xi" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="10">
+      <div class="tile-num">11</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/0x0/5d7b8ea829/s10-marktstrasse-ansichtskarte.jpg" alt="Historische Ansichtskarte der Dornbirner Marktstraße mit Geschäftshäusern.">
+        <div class="tile-credit">© Vorarlberger Landesbibliothek</div>
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Marktstraße</h2>
+        <p class="tile-teaser">Stell dir vor, du stehst hier im Jahr 1930.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/innenstadt-erleben/brunnen-europapassage" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+  </section>
+
+  <footer class="footer">
+    <p>Jetzt rausgehen, hinhören, entdecken.</p>
+    <a class="footer-cta" href="https://www.iappear.app/de/locations/innenstadt-erleben/uebersicht" target="_top" rel="noopener">
+      Rundgang starten
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+  </footer>
+</div>
+</body>
+</html>

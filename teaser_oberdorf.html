@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Das Dorf in der Stadt – i.appear</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf8f5;
+  --paper:#fffdfa;
+  --ink:#2a2420;
+  --muted:#8a7e72;
+  --hairline:#e0d9d0;
+  --accent:#6A7F3F;
+  --accent-soft:#EBEEDB;
+}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:'Libre Baskerville','Georgia',serif;min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:780px;margin:0 auto;padding:0}
+.header{padding:40px 28px 28px;text-align:center;border-bottom:1px solid var(--hairline)}
+.logo{display:block;margin:0 auto 22px;height:40px;width:auto;color:var(--ink)}
+.kicker{font-family:'Source Sans 3',sans-serif;font-size:11px;font-weight:700;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+.header h1{font-size:34px;font-weight:700;line-height:1.18;margin-bottom:14px;letter-spacing:-.2px}
+.header .sub{font-family:'Source Sans 3',sans-serif;font-size:14px;color:var(--muted);letter-spacing:.2px}
+.intro{padding:36px 28px 8px;text-align:center}
+.intro p{font-family:'Source Sans 3',sans-serif;font-size:15px;color:#5a5048;max-width:520px;margin:0 auto;line-height:1.65}
+.thread{position:relative;padding:32px 28px 40px}
+.thread::before{content:"";position:absolute;left:50%;top:0;bottom:80px;width:2px;background:linear-gradient(to bottom,transparent 0%,var(--accent-soft) 14px,var(--accent-soft) calc(100% - 14px),transparent);transform:translateX(-1px);z-index:0}
+.tile{position:relative;display:grid;grid-template-columns:1fr;gap:0;margin:26px 0 48px;z-index:1}
+.tile-num{position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-family:'Source Sans 3',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--muted);background:var(--bg);padding:4px 12px;border-radius:20px;border:1px solid var(--hairline);z-index:3}
+.tile-img{position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;border-radius:4px;background:#ebe6df;box-shadow:0 8px 28px -12px rgba(42,36,32,.28),0 2px 6px rgba(42,36,32,.06);margin-top:22px}
+.tile-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .6s cubic-bezier(.2,.6,.2,1)}
+.tile:hover .tile-img img{transform:scale(1.03)}
+.tile-img-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:28px}
+.tile-credit{position:absolute;bottom:6px;right:10px;font-family:'Source Sans 3',sans-serif;font-size:9px;color:rgba(255,253,250,.92);text-shadow:0 1px 3px rgba(0,0,0,.55);letter-spacing:.3px}
+.tile-body{padding:18px 4px 0;text-align:center}
+.tile-title{font-size:24px;font-weight:700;line-height:1.25;margin-bottom:10px;letter-spacing:-.1px}
+.tile-teaser{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-size:15.5px;color:#4a4038;line-height:1.6;margin-bottom:16px;max-width:520px;margin-left:auto;margin-right:auto}
+.tile-cta{display:inline-flex;align-items:center;gap:8px;font-family:'Source Sans 3',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink);text-decoration:none;padding:10px 18px;border:1.5px solid var(--ink);border-radius:24px;transition:all .2s ease;background:transparent}
+.tile-cta:hover{background:var(--ink);color:var(--bg);border-color:var(--ink);transform:translateY(-1px);box-shadow:0 4px 12px rgba(42,36,32,.18)}
+.tile-cta svg{transition:transform .2s}
+.tile-cta:hover svg{transform:translateX(2px)}
+.footer{padding:24px 28px 56px;text-align:center;border-top:1px solid var(--hairline);background:var(--accent-soft)}
+.footer p{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-size:15px;color:#4a4038;margin-bottom:18px;line-height:1.55}
+.footer-cta{display:inline-flex;align-items:center;gap:10px;font-family:'Source Sans 3',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:#faf8f5;background:var(--accent);padding:14px 28px;border-radius:28px;text-decoration:none;transition:all .25s;box-shadow:0 4px 14px -4px rgba(42,36,32,.3)}
+.footer-cta:hover{transform:translateY(-2px);box-shadow:0 8px 20px -4px rgba(42,36,32,.35)}
+@media(min-width:640px){
+  .tile{grid-template-columns:1fr 1fr;gap:32px;align-items:center;margin:40px 0 60px}
+  .tile:nth-child(odd) .tile-img{order:1}
+  .tile:nth-child(odd) .tile-body{order:2}
+  .tile:nth-child(even) .tile-img{order:2}
+  .tile:nth-child(even) .tile-body{order:1}
+  .tile-img{margin-top:0;aspect-ratio:4/3}
+  .tile-body{text-align:left;padding:0}
+  .tile-teaser{margin-left:0;margin-right:0}
+  .tile-num{left:0;top:-18px;transform:none}
+  .tile:nth-child(even) .tile-num{left:auto;right:0}
+  .thread::before{display:none}
+}
+@media(min-width:640px){
+  .header{padding:56px 28px 36px}
+  .header h1{font-size:46px}
+  .logo{height:50px;margin-bottom:28px}
+  .intro p{font-size:16.5px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="header">
+    <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 123.56 233.11" aria-label="i.appear" role="img">
+<path d="M37.54,233.11v-14.79c4.75-.91,10.4-1.83,15.88-2.19v-55.86c-4.38-.73-10.59-1.46-15.88-1.83v-14.6c11.5-1.46,25.56-2.01,39.06-1.64v73.93c5.11.36,10.4,1.28,14.79,2.19v14.79h-53.85Z"/>
+<path d="M61.69,75.15c-8,0-14.37-6.37-14.37-14.19s6.37-14.01,14.37-14.01,14.55,6.18,14.55,14.01-6.55,14.19-14.55,14.19Z"/>
+<circle cx="61.78" cy="61.78" r="50.28" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="23"/>
+</svg>
+    <div class="kicker">Rundgang · Oberdorf entdecken</div>
+    <h1>Das Dorf in der Stadt</h1>
+    <p class="sub">11 Stationen · rund 90 Minuten · Audioguide in Deutsch und Englisch</p>
+  </header>
+
+  <section class="intro">
+    <p>Ein Vorgeschmack. Scroll dich durch die Stationen — und wenn dich eine neugierig macht, hörst du sie direkt in der App.</p>
+  </section>
+
+  <section class="thread">
+    
+    <article class="tile" data-idx="0">
+      <div class="tile-num">01</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/2065x2567/7892ca15eb/angelika_kauffmann_selbstbildnis_in_bregenzerwalder_tracht_1781.jpg" alt="Selbstbildnis von Angelika Kauffmann in Bregenzerwälder Tracht mit schwarzem Filzhut, 1781">
+        <div class="tile-credit">© Public Domain – Angelika Kauffmann (1741–1807)</div>
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Weg ins Oberdorf</h2>
+        <p class="tile-teaser">Der Weg ins Oberdorf führt durch die Gasse einer weltberühmten Malerin.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/oberdorf-entdecken/angelika-kauffmann" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="1">
+      <div class="tile-num">02</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/13969756/0d170788ee/63962-01-dr-waibel-strasse-mit-person.jpg" alt="Dr. Waibelstraße">
+        
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Dr. Waibelstraße</h2>
+        <p class="tile-teaser">Hier wohnten Dornbirns mächtigste Familien — Fabrikanten, die den Bürgermeister stellten und untereinander heirateten.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/oberdorf-entdecken/villen-der-bergstrasse" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="2">
+      <div class="tile-num">03</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/6941026/36a015d1b5/48488-villa-guntram-hammerle.jpg" alt="Villa Guntram Hämmerle">
+        <div class="tile-credit">© Stadtarchiv Dornbirn (CC BY-NC-SA 4.0)</div>
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Hämmerle Villa</h2>
+        <p class="tile-teaser">Ein Haus, das aussieht wie eine mittelalterliche Burg.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/oberdorf-entdecken/villa-guntram-haemmerle" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="3">
+      <div class="tile-num">04</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/15605x11811/e049a2795b/59697-kapelle-oberdorf-schloss-oberdorf-oberdorfer-turm-reproduktion.jpg" alt="St. Sebastian">
+        
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">St. Sebastian</h2>
+        <p class="tile-teaser">1467 als Kapelle errichtet — mit Steinen aus dem abgetragenen Oberdorfer Turm erweitert.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/oberdorf-entdecken/st-sebastian" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="4">
+      <div class="tile-num">05</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/7680506/a5799b4f95/61205-1-oberdorfstrasse-1925.jpg" alt="Oberdorfstraße 1925">
+        <div class="tile-credit">© Wirtschaftsarchiv Vorarlberg</div>
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Leben im Oberdorf</h2>
+        <p class="tile-teaser">Kleinster Stadtbezirk, größtes Dorfgefühl.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/oberdorf-entdecken/leben-im-oberdorf" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="5">
+      <div class="tile-num">06</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/709x923/934613bc9a/oturm_entsattigt.png" alt="Oberdorfer Turm ">
+        
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Oberdorfer Turm </h2>
+        <p class="tile-teaser">Grundmauern, hinter denen über 600 Jahre Geschichte stecken.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/oberdorf-entdecken/oberdofer-turm-rg-oberdorf" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="6">
+      <div class="tile-num">07</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/0x0/69113ff9d0/03_schlossguggerhaus_aussentreppe.jpg" alt="Historisches Foto mit Fokus auf die Außentreppe des Schlossguggerhauses. Zeigt architektonische Details.">
+        <div class="tile-credit">© Stadtarchiv Dornbirn</div>
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Schlossguggerhaus </h2>
+        <p class="tile-teaser">Unscheinbar. Und doch das älteste erhaltene Gebäude Dornbirns.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/oberdorf-entdecken/schlossguggerhaus-mit-weingarten" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="7">
+      <div class="tile-num">08</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/2000x1414/d6f9d870af/kochschule.png" alt="Oberdorfer Kern">
+        
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Oberdorfer Kern</h2>
+        <p class="tile-teaser">Ein Fleck, an dem die Zeit einen Moment lang innezuhalten scheint.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/oberdorf-entdecken/oberdorfer-kern" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="8">
+      <div class="tile-num">09</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/5675x5655/58ab98080f/beer672-dornbirn-oberdorf-rosenstrasse-9-1930-1965.jpg" alt="Rosenstraße">
+        
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Rosenstraße</h2>
+        <p class="tile-teaser">Einst hieß sie einfach „Rosengasse&quot; — und ihrem Namen wurde sie lange gerecht.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/oberdorf-entdecken/villen-der-rosenstrasse" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="9">
+      <div class="tile-num">10</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/15019x11346/bbd456947a/61465-dornbirner-tochterschule-spater-musikschule-rosenstrasse-1910.jpg" alt="Musikschule ">
+        
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Musikschule </h2>
+        <p class="tile-teaser">Das Haus, in dem heute Mundart klingt und Lieder entstehen.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/oberdorf-entdecken/musikschule-mundart-lieder" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+
+    <article class="tile" data-idx="10">
+      <div class="tile-num">11</div>
+      <div class="tile-img">
+        <img loading="lazy" src="https://a.storyblok.com/f/286923351828298/2000x1414/473a804f78/altes-rathaus-postkarte.png" alt="Altes Rathaus">
+        
+      </div>
+      <div class="tile-body">
+        <h2 class="tile-title">Altes Rathaus</h2>
+        <p class="tile-teaser">Der Platz hieß lange „Gemeindeplatz&quot; — hier schlug Dornbirns Mitte.</p>
+        <a class="tile-cta" href="https://www.iappear.app/de/locations/oberdorf-entdecken/altes-rathaus" target="_top" rel="noopener">
+          Station hören
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </article>
+  </section>
+
+  <footer class="footer">
+    <p>Jetzt rausgehen, hinhören, entdecken.</p>
+    <a class="footer-cta" href="https://www.iappear.app/de/locations/oberdorf-entdecken/uebersicht" target="_top" rel="noopener">
+      Rundgang starten
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+  </footer>
+</div>
+</body>
+</html>
