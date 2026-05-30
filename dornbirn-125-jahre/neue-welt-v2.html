@@ -925,17 +925,31 @@
       const infoEntries = document.getElementById("info-entries");
 
       let currentShownDest = null;
+      let pendingFadeTimer = null;
+      let renderToken = 0;
+
+      function cancelPendingFade() {
+        if (pendingFadeTimer !== null) {
+          clearTimeout(pendingFadeTimer);
+          pendingFadeTimer = null;
+        }
+      }
 
       function showInfo(destKey) {
         const place = PLACES[destKey];
         if (!place) return;
         if (destKey === currentShownDest && infoBox.classList.contains("open")) return;
 
+        cancelPendingFade();
+        const myToken = ++renderToken;
+
         if (currentShownDest && currentShownDest !== destKey) {
           // Fade out → render → fade in
           infoHeader.style.opacity = "0";
           infoEntries.style.opacity = "0";
-          setTimeout(() => {
+          pendingFadeTimer = setTimeout(() => {
+            pendingFadeTimer = null;
+            if (myToken !== renderToken) return; // stale: hideInfo/showInfo lief inzwischen
             _populateInfo(destKey);
             infoHeader.style.opacity = "1";
             infoEntries.style.opacity = "1";
@@ -1003,7 +1017,11 @@
       }
 
       function hideInfo() {
+        cancelPendingFade();
+        renderToken++; // jedes pending setTimeout wird damit invalidiert
         infoHeader.style.display = "none";
+        infoHeader.style.opacity = "1"; // reset für nächsten showInfo
+        infoEntries.style.opacity = "1";
         infoEntries.innerHTML = "";
         infoIntro.style.display = "block";
         infoBox.classList.remove("open");
