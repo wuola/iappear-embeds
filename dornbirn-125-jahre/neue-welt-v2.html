@@ -1013,6 +1013,7 @@
       // ---------- Auto-Show während Animation ----------
       let lastFocusedDest = null;
       const ECHO_WINDOW = 2.8;  // Jahre, in denen ein Echo "aktiv" bleibt
+      const FIRST_EVENT_YEAR = Math.min(...JOURNEYS.map(j => j.year)); // 1817 (Drexel)
 
       function pickFocus() {
         // Priorität 1: gerade laufendes Schiff
@@ -1028,6 +1029,15 @@
       }
 
       function maybeAutoShow() {
+        // Pre-Phase: vor dem ersten Event → Intro zeigen
+        if (currentYear < FIRST_EVENT_YEAR) {
+          if (currentShownDest !== null) {
+            hideInfo();
+            lastFocusedDest = null;
+          }
+          return;
+        }
+
         const focus = pickFocus();
         if (focus === null) return;            // nichts läuft → letzten State lassen
         if (focus === lastFocusedDest) return; // unverändert → kein Re-Render
