@@ -533,7 +533,7 @@
       const svgNS = "http://www.w3.org/2000/svg";
 
       // ---------- DATA ----------
-      const TRAVEL_DURATION = 0.7; // visualisierte Reisezeit in Jahren
+      const TRAVEL_DURATION = 1.4; // visualisierte Reisezeit in Jahren (länger = Schiff bleibt sichtbar)
 
       // Atlantik-zentrierte Equirektangular-Projektion (passt zur eingebetteten Weltkarte, in v2 weiter rauszoomed)
       const LNG_MIN = -140, LNG_MAX = 35;
@@ -747,7 +747,7 @@
       // ---------- TIME / UPDATE ----------
       const START_YEAR = 1800;
       const END_YEAR = 2026;
-      const PLAY_SPEED = 9; // Jahre pro Sekunde
+      const PLAY_SPEED = 6; // Jahre pro Sekunde (langsamer = mehr Zeit für Info-Box)
 
       let currentYear = START_YEAR;
       let playing = false;
@@ -837,6 +837,8 @@
           revShip.style.opacity = "0";
         }
 
+        // Auto-Show Info-Box je nach aktuellem Fokus (Schiff/Echo)
+        maybeAutoShow();
       }
 
       function tick(ts) {
@@ -956,7 +958,36 @@
         infoBox.classList.remove("open");
       }
 
-      document.getElementById("info-close").addEventListener("click", hideInfo);
+      // ---------- Auto-Show während Animation ----------
+      let lastFocusedDest = null;
+      const ECHO_WINDOW = 2;  // Jahre, in denen ein Echo "aktiv" bleibt
+
+      function pickFocus() {
+        // Priorität 1: gerade laufendes Schiff
+        for (const j of JOURNEYS) {
+          const progress = (currentYear - j.year) / TRAVEL_DURATION;
+          if (progress >= 0 && progress < 1) return j.dest;
+        }
+        // Priorität 2: gerade aktives Echo
+        for (const e of ECHOES) {
+          if (currentYear >= e.year && currentYear < e.year + ECHO_WINDOW) return e.at;
+        }
+        return null;
+      }
+
+      function maybeAutoShow() {
+        const focus = pickFocus();
+        if (focus === null) return;            // nichts läuft → letzten State lassen
+        if (focus === lastFocusedDest) return; // unverändert → kein Re-Render
+        lastFocusedDest = focus;
+        showInfo(focus);
+        flashCity(focus);
+      }
+
+      document.getElementById("info-close").addEventListener("click", () => {
+        hideInfo();
+        lastFocusedDest = pickFocus(); // Sentinel: blockiert Re-Open für aktuellen Focus
+      });
 
       // Klick auf Eintrag innerhalb Info-Box → setYear + Karte pulse
       infoEntries.addEventListener("click", (ev) => {
@@ -983,6 +1014,7 @@
         const key = circle.id.replace(/^city-/, "");
         showInfo(key);
         flashCity(key);
+        lastFocusedDest = key; // Auto-Show überspringt diesen Focus
       });
 
       // Initial
