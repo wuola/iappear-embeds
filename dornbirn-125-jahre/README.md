@@ -1,9 +1,12 @@
-# 125 Jahre Dornbirn — Interaktive Timeline
+# 125 Jahre Dornbirn — Interaktive Erkundungen
 
-Mobile-First Timeline der wichtigsten Ereignisse Dornbirns seit der Stadterhebung 1901.
-227 Ereignisse, durchsuchbar und filterbar nach Kategorie und Jahrzehnt.
+Drei verschränkte Mobile-First Visualisierungen zur Stadtgeschichte:
 
-**Live:** https://wuola.github.io/iappear-embeds/dornbirn-125-jahre/
+| Embed | Live |
+|---|---|
+| **Timeline** (Archiv: 227 Ereignisse, suchen/filtern) | [→ index.html](https://wuola.github.io/iappear-embeds/dornbirn-125-jahre/) |
+| **Dein Leben** (Geburtsjahr-Slider erzeugt Biografie) | [→ dein-leben.html](https://wuola.github.io/iappear-embeds/dornbirn-125-jahre/dein-leben.html) |
+| **In die Neue Welt** (Auswanderung mit animierten Schiffen) | [→ neue-welt.html](https://wuola.github.io/iappear-embeds/dornbirn-125-jahre/neue-welt.html) |
 
 ## Datenbasis
 

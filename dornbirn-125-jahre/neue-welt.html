@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Von Dornbirn in die Neue Welt</title>
+  <style>
+    :root {
+      --bg: #f8f4ec;
+      --sea: #cde4f0;
+      --land: #f1ecd9;
+      --land-stroke: #c9c2a8;
+      --fg: #1a1a1a;
+      --muted: #7a7a7a;
+      --line: #e0ddd6;
+      --accent: #b34a2a;
+      --accent-soft: #f3e3dd;
+      --ship: #2a3a4a;
+      --route: #b34a2a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--fg);
+      background: var(--bg);
+      -webkit-text-size-adjust: 100%;
+    }
+
+    header.app {
+      padding: 10px 14px 4px;
+      padding-top: max(10px, env(safe-area-inset-top));
+      text-align: center;
+    }
+    header.app h1 {
+      font-size: 17px;
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .nav-links {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .nav-links a { color: var(--muted); text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+
+    .year-display {
+      text-align: center;
+      padding: 2px 0 6px;
+      font-size: 38px;
+      font-weight: 700;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+
+    .map-wrap {
+      background: var(--sea);
+      max-width: 960px;
+      margin: 0 auto;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      position: relative;
+    }
+    svg.map {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: 56vh;
+    }
+
+    /* Land */
+    .land { fill: var(--land); stroke: var(--land-stroke); stroke-width: 1.5; }
+    .label-region {
+      font-size: 13px;
+      fill: #9a9486;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      pointer-events: none;
+    }
+
+    /* Routes */
+    .route-path {
+      fill: none;
+      stroke: var(--route);
+      stroke-width: 2;
+      stroke-dasharray: 3 5;
+      stroke-linecap: round;
+      opacity: 0;
+      transition: opacity .35s;
+    }
+    .route-path.visible { opacity: 0.5; }
+    .route-path.active { opacity: 1; stroke-dasharray: none; stroke-width: 2.5; }
+    .route-reverse { stroke: #355d6b; }
+
+    /* Cities */
+    .city {
+      fill: var(--land);
+      stroke: var(--accent);
+      stroke-width: 2;
+      transition: fill .3s, r .3s;
+    }
+    .city.arrived { fill: var(--accent); }
+    .city.is-home { fill: var(--accent); stroke: var(--accent); }
+
+    .city-label {
+      font-size: 10px;
+      fill: var(--fg);
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity .4s;
+      pointer-events: none;
+    }
+    .city-label.visible { opacity: 1; }
+    .city-label-home {
+      font-size: 12px;
+      fill: var(--accent);
+      font-weight: 700;
+      opacity: 1;
+    }
+
+    /* Ships */
+    .ship { opacity: 0; transition: opacity .25s; }
+    .ship-hull { fill: var(--ship); }
+    .ship-sail { fill: #fff; stroke: var(--ship); stroke-width: 0.8; }
+    .ship-mast { stroke: var(--ship); stroke-width: 1; }
+    .ship.reverse .ship-hull { fill: #355d6b; }
+
+    /* Echo bubbles (kleine Punkte am Ort + Tooltip beim Klick) */
+    .echo-marker {
+      fill: var(--accent);
+      opacity: 0;
+      transition: opacity .5s;
+    }
+    .echo-marker.visible { opacity: 1; }
+    .echo-marker.special { fill: #355d6b; }
+
+    /* Controls */
+    .controls {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 10px 14px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .controls-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .play-btn {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: 0;
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+      flex: 0 0 auto;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,.15);
+    }
+    .play-btn:hover { background: #9a4024; }
+    .scrubber {
+      flex: 1 1 auto;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      background: var(--line);
+      border-radius: 999px;
+      outline: none;
+    }
+    .scrubber::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid var(--bg);
+      cursor: pointer;
+    }
+    .scrubber::-moz-range-thumb {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid var(--bg);
+      cursor: pointer;
+    }
+    .skip-buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .skip-btn {
+      font-size: 11px;
+      padding: 5px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: white;
+      color: var(--fg);
+      cursor: pointer;
+    }
+    .skip-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .skip-btn.special { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-soft); font-weight: 700; }
+
+    /* People list */
+    .people {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 6px 14px 20px;
+    }
+    .people h2 {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 18px 0 8px;
+      font-weight: 700;
+    }
+    .entry {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      gap: 10px;
+      align-items: start;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .entry:hover { background: rgba(0,0,0,.025); }
+    .entry.active {
+      background: var(--accent-soft);
+      border-radius: 6px;
+      padding-left: 8px;
+      padding-right: 8px;
+      margin-left: -8px;
+      margin-right: -8px;
+    }
+    .entry .year {
+      font-weight: 700;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+      font-size: 14px;
+    }
+    .entry .name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .entry .dest {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .entry .desc {
+      font-size: 13px;
+      color: #333;
+      margin-top: 5px;
+    }
+    .entry.is-echo .name { color: var(--accent); }
+    .entry.is-special .name { color: #355d6b; }
+
+    footer.app {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 20px 14px 40px;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 480px) {
+      .year-display { font-size: 30px; }
+      header.app h1 { font-size: 15px; }
+      .label-region { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app">
+    <h1>Von Dornbirn in die Neue Welt</h1>
+    <div class="nav-links">
+      <a href="./">← zur Timeline</a> · <a href="dein-leben.html">dein Leben →</a>
+    </div>
+  </header>
+
+  <div class="year-display" id="year">1800</div>
+
+  <div class="map-wrap">
+    <svg class="map" viewBox="0 0 1000 500" id="map" preserveAspectRatio="xMidYMid meet" aria-label="Karte: Auswanderung von Dornbirn in die USA">
+      <!-- Europa -->
+      <path class="land" d="M 60 175 L 95 155 L 145 150 L 200 165 L 220 195 L 215 235 L 200 275 L 165 295 L 115 290 L 75 270 L 55 235 L 50 200 Z"/>
+      <text class="label-region" x="135" y="140" text-anchor="middle">EUROPA</text>
+
+      <!-- Nordamerika -->
+      <path class="land" d="M 390 175 L 470 160 L 560 155 L 660 160 L 760 165 L 850 175 L 920 195 L 945 225 L 940 260 L 905 295 L 870 330 L 830 365 L 780 395 L 720 410 L 660 405 L 600 385 L 545 360 L 495 325 L 455 285 L 420 240 L 395 200 Z"/>
+      <text class="label-region" x="670" y="140" text-anchor="middle">NORDAMERIKA</text>
+
+      <!-- Atlantic label -->
+      <text x="300" y="370" style="font-size:11px;fill:#7a9bb0;font-style:italic;letter-spacing:0.1em" text-anchor="middle">Atlantik</text>
+
+      <!-- Routes -->
+      <g id="routes"></g>
+
+      <!-- Cities -->
+      <g id="cities"></g>
+
+      <!-- Ships -->
+      <g id="ships"></g>
+
+      <!-- Echo markers (small pulses at locations) -->
+      <g id="echoes"></g>
+    </svg>
+  </div>
+
+  <div class="controls">
+    <div class="controls-row">
+      <button class="play-btn" id="play-btn" aria-label="Abspielen">▶</button>
+      <input type="range" class="scrubber" min="1800" max="2026" value="1800" step="0.5" id="scrubber" />
+    </div>
+    <div class="skip-buttons">
+      <button class="skip-btn" data-jump="1800">↺ Start</button>
+      <button class="skip-btn" data-jump="1850">1850</button>
+      <button class="skip-btn" data-jump="1900">1900</button>
+      <button class="skip-btn" data-jump="1938">1938</button>
+      <button class="skip-btn special" data-jump="2011">→ 2011 Brücke zurück</button>
+    </div>
+  </div>
+
+  <div class="people" id="people"></div>
+
+  <footer class="app">
+    Etwa 1.000 Dornbirner wanderten zwischen ca. 1800 und 1938 in die USA aus.<br>
+    Quelle: Meinrad Pichler, „Von Dornbirn in die Neue Welt", Stadt Dornbirn 2012.
+  </footer>
+
+  <script>
+    (function () {
+      const svgNS = "http://www.w3.org/2000/svg";
+
+      // ---------- DATA ----------
+      const TRAVEL_DURATION = 0.7; // visualisierte Reisezeit in Jahren
+
+      const PLACES = {
+        dornbirn:    { x: 160, y: 230, name: "Dornbirn", isHome: true },
+        philadelphia:{ x: 875, y: 250, name: "Philadelphia" },
+        dubuque:     { x: 685, y: 230, name: "Dubuque, Iowa" },
+        augusta:     { x: 835, y: 320, name: "Augusta, GA" },
+        newUlm:      { x: 645, y: 215, name: "New Ulm, MN" },
+        stPaul:      { x: 655, y: 200, name: "St. Paul, MN" },
+        carrollton:  { x: 700, y: 275, name: "Carrollton, MO" },
+        zanzenberg:  { x: 670, y: 365, name: "Zanzenberg, TX" },
+        newYork:     { x: 895, y: 220, name: "New York" },
+        montana:     { x: 540, y: 195, name: "Montana" },
+      };
+
+      const JOURNEYS = [
+        { id: "drexel", year: 1817, dest: "philadelphia",
+          name: "Franz Martin Drexel",
+          desc: "Maler aus Hatlerdorf. Wird in Philadelphia zum Banker. Sein Bankhaus wächst über Drexel-Morgan zu J.P. Morgan." },
+        { id: "ganahl", year: 1828, dest: "augusta",
+          name: "Josef Ganahl",
+          desc: "Sohn des Dornbirner Landrichters. Baumwollhändler in Georgia. Sein Sohn gründet später Zanzenberg in Texas." },
+        { id: "rhomberg-ja", year: 1855, dest: "dubuque",
+          name: "Josef Andrä Rhomberg",
+          desc: "Wird in Dubuque zum Whisky-Magnaten und Eisenbahn-Investor. Einer der reichsten Männer der Stadt." },
+        { id: "rhomberg-k", year: 1856, dest: "dubuque",
+          name: "Karoline Rhomberg-Fischer",
+          desc: "Pionier-Geschäftsfrau in Dubuque." },
+        { id: "gasser", year: 1858, dest: "dubuque",
+          name: "Kaspar Gasser",
+          desc: "Schuhmacher. Sein Enkel Herbert Spencer Gasser bekommt 1944 den Nobelpreis für Medizin." },
+        { id: "bobleter", year: 1860, dest: "newUlm",
+          name: "Familie Bobleter",
+          desc: "Josef A. Bobleter wird Brigadegeneral und Finanzminister von Minnesota." },
+        { id: "rhomberg-hi", year: 1865, dest: "carrollton",
+          name: "Hieronimus Rhomberg",
+          desc: "Brauer in Missouri. 1920 sorgt ein angeblicher Ölfund auf seinem „Rhomberg Hill" für Furore." },
+        { id: "ganahl-c", year: 1870, dest: "zanzenberg",
+          name: "Charles de Ganahl",
+          desc: "Sohn von Josef Ganahl. Gründet die Siedlung Zanzenberg in Texas." },
+        { id: "luger", year: 1872, dest: "stPaul",
+          name: "Familie Luger",
+          desc: "Gründen in St. Paul eine erfolgreiche Möbelfabrik. Erst in den 1950er-Jahren wird sie eingestellt." },
+        { id: "schwaerzler", year: 1878, dest: "newYork",
+          name: "Familie Schwärzler",
+          desc: "Baufirma in New York und New Jersey." },
+        { id: "waibel", year: 1885, dest: "newUlm",
+          name: "Familie Waibel",
+          desc: "Werden Großgrundbesitzer in Minnesota." },
+        { id: "wehinger", year: 1900, dest: "montana",
+          name: "Martin Wehinger",
+          desc: "Rancher in Montana. 1917/19 angeklagt wegen kritischer Aussagen zum Ersten Weltkrieg („Verhetzungs-Prozess")." },
+      ];
+
+      const ECHOES = [
+        { year: 1909, at: "newUlm",
+          text: "Josef A. Bobleter stirbt. New Ulm verhängt einen Trauertag." },
+        { year: 1920, at: "carrollton",
+          text: "„Ölfund" am Rhomberg Hill — die Stadt fiebert." },
+        { year: 1930, at: "dubuque",
+          text: "Großes Farmensterben. Viele Dornbirner-Nachkommen geben auf." },
+        { year: 1938, at: "dornbirn",
+          text: "Anschluss. Die Massenauswanderung endet." },
+        { year: 1944, at: "dubuque",
+          text: "Nobelpreis Medizin: Herbert Spencer Gasser (Enkel des Schuhmachers Kaspar Gasser)." },
+        { year: 2000, at: "philadelphia",
+          text: "Katharina Drexel (Enkelin von Franz Martin) wird heiliggesprochen." },
+        { year: 2011, at: "dubuque", isReverse: true,
+          text: "Dornbirn und Dubuque werden Städtepartner. Die Brücke schließt sich." },
+      ];
+
+      // ---------- BUILD SVG ----------
+      function makePathD(from, to, curveDir) {
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const offset = dist * 0.20 * curveDir;
+        const mx = (from.x + to.x) / 2 + (-dy / dist) * offset;
+        const my = (from.y + to.y) / 2 + (dx / dist) * offset;
+        return `M ${from.x} ${from.y} Q ${mx} ${my} ${to.x} ${to.y}`;
+      }
+
+      function curveDirFor(destKey) {
+        // Über den Atlantik nach oben curven; bei südlichen Zielen nach unten
+        const p = PLACES[destKey];
+        return p.y < 280 ? -1 : 1;
+      }
+
+      const dornbirn = PLACES.dornbirn;
+      const routesG = document.getElementById("routes");
+
+      // Routen pro Ziel (eindeutig, weil mehrere Reisende oft selbes Ziel haben)
+      const destKeys = [...new Set(JOURNEYS.map(j => j.dest))];
+      destKeys.forEach(key => {
+        const dest = PLACES[key];
+        const d = makePathD(dornbirn, dest, curveDirFor(key));
+        const path = document.createElementNS(svgNS, "path");
+        path.setAttribute("id", "route-" + key);
+        path.setAttribute("d", d);
+        path.classList.add("route-path");
+        routesG.appendChild(path);
+      });
+
+      // Reverse-Pfad: 2011 Brücke Dubuque → Dornbirn
+      {
+        const d = makePathD(PLACES.dubuque, dornbirn, -1);
+        const path = document.createElementNS(svgNS, "path");
+        path.setAttribute("id", "route-reverse");
+        path.setAttribute("d", d);
+        path.classList.add("route-path");
+        path.classList.add("route-reverse");
+        routesG.appendChild(path);
+      }
+
+      // Städte
+      const citiesG = document.getElementById("cities");
+      Object.entries(PLACES).forEach(([key, p]) => {
+        const c = document.createElementNS(svgNS, "circle");
+        c.setAttribute("cx", p.x);
+        c.setAttribute("cy", p.y);
+        c.setAttribute("r", p.isHome ? 6 : 4);
+        c.setAttribute("id", "city-" + key);
+        c.classList.add("city");
+        if (p.isHome) c.classList.add("is-home");
+        citiesG.appendChild(c);
+
+        const label = document.createElementNS(svgNS, "text");
+        const dx = p.x > 500 ? 8 : -8;
+        label.setAttribute("x", p.x + dx);
+        label.setAttribute("y", p.y - 8);
+        label.setAttribute("text-anchor", p.x > 500 ? "start" : "end");
+        label.setAttribute("id", "label-" + key);
+        label.textContent = p.name;
+        label.classList.add("city-label");
+        if (p.isHome) label.classList.add("city-label-home");
+        citiesG.appendChild(label);
+      });
+
+      // Schiffe
+      const shipsG = document.getElementById("ships");
+      function makeShip(id, classes) {
+        const g = document.createElementNS(svgNS, "g");
+        g.setAttribute("id", id);
+        g.classList.add("ship");
+        (classes || []).forEach(c => g.classList.add(c));
+
+        const hull = document.createElementNS(svgNS, "path");
+        hull.setAttribute("d", "M -7 -1 L 7 -1 L 5 3 L -5 3 Z");
+        hull.classList.add("ship-hull");
+        g.appendChild(hull);
+
+        const mast = document.createElementNS(svgNS, "line");
+        mast.setAttribute("x1", "0"); mast.setAttribute("y1", "-1");
+        mast.setAttribute("x2", "0"); mast.setAttribute("y2", "-9");
+        mast.classList.add("ship-mast");
+        g.appendChild(mast);
+
+        const sail = document.createElementNS(svgNS, "path");
+        sail.setAttribute("d", "M 0 -8 L 5 -2 L 0 -2 Z");
+        sail.classList.add("ship-sail");
+        g.appendChild(sail);
+
+        return g;
+      }
+      JOURNEYS.forEach(j => shipsG.appendChild(makeShip("ship-" + j.id)));
+      shipsG.appendChild(makeShip("ship-reverse", ["reverse"]));
+
+      // Echo markers (kleine Punkte am Ort)
+      const echoesG = document.getElementById("echoes");
+      ECHOES.forEach((e, i) => {
+        const place = PLACES[e.at];
+        const m = document.createElementNS(svgNS, "circle");
+        m.setAttribute("cx", place.x);
+        m.setAttribute("cy", place.y);
+        m.setAttribute("r", 7);
+        m.setAttribute("id", "echo-" + i);
+        m.classList.add("echo-marker");
+        m.setAttribute("fill", "none");
+        m.setAttribute("stroke", e.isReverse ? "#355d6b" : "#b34a2a");
+        m.setAttribute("stroke-width", "1.5");
+        echoesG.appendChild(m);
+      });
+
+      // ---------- TIME / UPDATE ----------
+      const START_YEAR = 1800;
+      const END_YEAR = 2026;
+      const PLAY_SPEED = 9; // Jahre pro Sekunde
+
+      let currentYear = START_YEAR;
+      let playing = false;
+      let lastTs = 0;
+
+      const scrubber = document.getElementById("scrubber");
+      const yearDisplay = document.getElementById("year");
+      const playBtn = document.getElementById("play-btn");
+
+      function setYear(y) {
+        currentYear = Math.max(START_YEAR, Math.min(END_YEAR, y));
+        scrubber.value = currentYear;
+        yearDisplay.textContent = Math.floor(currentYear);
+        update();
+      }
+
+      function update() {
+        // Reset destination states (für rückwärts-scrub)
+        destKeys.forEach(key => {
+          const city = document.getElementById("city-" + key);
+          const label = document.getElementById("label-" + key);
+          const route = document.getElementById("route-" + key);
+          city.classList.remove("arrived");
+          label.classList.remove("visible");
+          route.classList.remove("visible");
+          route.classList.remove("active");
+        });
+
+        // Update Reisen
+        JOURNEYS.forEach(j => {
+          const shipEl = document.getElementById("ship-" + j.id);
+          const cityEl = document.getElementById("city-" + j.dest);
+          const labelEl = document.getElementById("label-" + j.dest);
+          const routeEl = document.getElementById("route-" + j.dest);
+          const progress = (currentYear - j.year) / TRAVEL_DURATION;
+
+          if (progress < 0) {
+            shipEl.style.opacity = "0";
+          } else if (progress >= 1) {
+            shipEl.style.opacity = "0";
+            cityEl.classList.add("arrived");
+            labelEl.classList.add("visible");
+            routeEl.classList.add("visible");
+          } else {
+            shipEl.style.opacity = "1";
+            const pathLen = routeEl.getTotalLength();
+            const pt = routeEl.getPointAtLength(pathLen * progress);
+            const pt2 = routeEl.getPointAtLength(Math.min(pathLen, pathLen * progress + 2));
+            const angle = Math.atan2(pt2.y - pt.y, pt2.x - pt.x) * 180 / Math.PI;
+            shipEl.setAttribute("transform", `translate(${pt.x}, ${pt.y}) rotate(${angle})`);
+            routeEl.classList.add("visible");
+            routeEl.classList.add("active");
+          }
+        });
+
+        // Update Echos
+        ECHOES.forEach((e, i) => {
+          const el = document.getElementById("echo-" + i);
+          if (currentYear >= e.year) {
+            el.classList.add("visible");
+          } else {
+            el.classList.remove("visible");
+          }
+        });
+
+        // Reverse-Reise (2011 Brücke)
+        const reverse = ECHOES.find(x => x.isReverse);
+        const revPath = document.getElementById("route-reverse");
+        const revShip = document.getElementById("ship-reverse");
+        revPath.classList.remove("active");
+        revPath.classList.remove("visible");
+        if (reverse && currentYear >= reverse.year) {
+          const rp = Math.min(1, (currentYear - reverse.year) / 0.5);
+          if (rp < 1) {
+            revPath.classList.add("active");
+            const len = revPath.getTotalLength();
+            const pt = revPath.getPointAtLength(len * rp);
+            const pt2 = revPath.getPointAtLength(Math.min(len, len * rp + 2));
+            const ang = Math.atan2(pt2.y - pt.y, pt2.x - pt.x) * 180 / Math.PI;
+            revShip.setAttribute("transform", `translate(${pt.x}, ${pt.y}) rotate(${ang})`);
+            revShip.style.opacity = "1";
+          } else {
+            revPath.classList.add("visible");
+            revShip.style.opacity = "0";
+          }
+        } else {
+          revShip.style.opacity = "0";
+        }
+
+        // Highlight aktive Eintrag in Liste
+        document.querySelectorAll(".entry").forEach(el => el.classList.remove("active"));
+        JOURNEYS.forEach(j => {
+          const progress = (currentYear - j.year) / TRAVEL_DURATION;
+          if (progress >= 0 && progress < 2) {
+            const el = document.getElementById("entry-" + j.id);
+            if (el) el.classList.add("active");
+          }
+        });
+        ECHOES.forEach((e, i) => {
+          if (Math.abs(currentYear - e.year) < 2) {
+            const el = document.getElementById("entry-echo-" + i);
+            if (el) el.classList.add("active");
+          }
+        });
+      }
+
+      function tick(ts) {
+        if (!lastTs) lastTs = ts;
+        const dt = (ts - lastTs) / 1000;
+        lastTs = ts;
+        if (playing) {
+          let next = currentYear + dt * PLAY_SPEED;
+          if (next >= END_YEAR) {
+            next = END_YEAR;
+            playing = false;
+            playBtn.textContent = "↻";
+          }
+          setYear(next);
+        }
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+
+      // Controls
+      playBtn.addEventListener("click", () => {
+        if (currentYear >= END_YEAR) {
+          setYear(START_YEAR);
+          playing = true;
+          playBtn.textContent = "❚❚";
+          return;
+        }
+        playing = !playing;
+        playBtn.textContent = playing ? "❚❚" : "▶";
+      });
+
+      scrubber.addEventListener("input", (e) => {
+        playing = false;
+        playBtn.textContent = "▶";
+        setYear(parseFloat(e.target.value));
+      });
+
+      document.querySelectorAll(".skip-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          setYear(parseInt(btn.dataset.jump, 10));
+          playing = false;
+          playBtn.textContent = "▶";
+        });
+      });
+
+      // ---------- People list ----------
+      const peopleEl = document.getElementById("people");
+      const allEntries = [
+        ...JOURNEYS.map(j => ({ kind: "journey", year: j.year, data: j })),
+        ...ECHOES.map((e, i) => ({ kind: "echo", year: e.year, data: e, idx: i })),
+      ].sort((a, b) => a.year - b.year);
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+      }
+
+      let html = "<h2>Reisende & Echos</h2>";
+      allEntries.forEach(entry => {
+        if (entry.kind === "journey") {
+          const j = entry.data;
+          html += `
+            <div class="entry" id="entry-${j.id}" data-jump="${j.year}">
+              <div class="year">${j.year}</div>
+              <div>
+                <div class="name">${escapeHtml(j.name)}</div>
+                <div class="dest">→ ${escapeHtml(PLACES[j.dest].name)}</div>
+                <div class="desc">${escapeHtml(j.desc)}</div>
+              </div>
+            </div>`;
+        } else {
+          const e = entry.data;
+          const cls = e.isReverse ? "entry is-echo is-special" : "entry is-echo";
+          html += `
+            <div class="${cls}" id="entry-echo-${entry.idx}" data-jump="${e.year}">
+              <div class="year">${e.year}</div>
+              <div>
+                <div class="name">↪ ${escapeHtml(PLACES[e.at].name)}</div>
+                <div class="desc">${escapeHtml(e.text)}</div>
+              </div>
+            </div>`;
+        }
+      });
+      peopleEl.innerHTML = html;
+
+      peopleEl.addEventListener("click", (ev) => {
+        const card = ev.target.closest("[data-jump]");
+        if (!card) return;
+        setYear(parseFloat(card.dataset.jump));
+        playing = false;
+        playBtn.textContent = "▶";
+      });
+
+      // Initial
+      update();
+    })();
+  </script>
+</body>
+</html>
