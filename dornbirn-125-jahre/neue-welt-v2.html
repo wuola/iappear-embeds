@@ -753,19 +753,21 @@
       const START_YEAR = 1800;
       const END_YEAR = 2026;
       // Adaptive Geschwindigkeit: schnell zwischen Events, langsam wenn was läuft
-      const SLOW_SPEED = 0.8; // Jahre pro Sekunde während eines Events (langsam = Zeit zum Lesen)
-      const FAST_SPEED = 14;  // Jahre pro Sekunde zwischen Events
-      const REVERSE_DURATION = 1.8; // visualisierte Dauer der Brücke-zurück-Animation
+      const SLOW_SPEED = 0.8;          // Jahre pro Sekunde während eines Events
+      const FAST_SPEED = 14;           // Jahre pro Sekunde zwischen Events
+      const REVERSE_DURATION = 1.8;    // visualisierte Dauer der Brücke-zurück-Animation
+      const POST_EVENT_DWELL = 3.0;    // Jahre Lese-Phase NACH dem Event (bleibt slow, Card sichtbar)
 
       function isEventActive() {
         for (const j of JOURNEYS) {
-          const progress = (currentYear - j.year) / TRAVEL_DURATION;
+          // Schiff fährt + Nachlese-Phase: Card bleibt nach Ankunft noch sichtbar
+          const totalSlow = TRAVEL_DURATION + POST_EVENT_DWELL;
+          const progress = (currentYear - j.year) / totalSlow;
           if (progress >= 0 && progress < 1) return true;
         }
         for (const e of ECHOES) {
-          // Reverse-Echo (Brücke) hat eigene Animation-Dauer
           const window = e.isReverse ? REVERSE_DURATION : ECHO_WINDOW;
-          if (currentYear >= e.year && currentYear < e.year + window) return true;
+          if (currentYear >= e.year && currentYear < e.year + window + POST_EVENT_DWELL) return true;
         }
         return false;
       }
