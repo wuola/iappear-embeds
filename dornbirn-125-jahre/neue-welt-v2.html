@@ -75,14 +75,19 @@
       border-top: 1px solid var(--land-stroke);
       border-bottom: 1px solid var(--land-stroke);
       position: relative;
+      /* aspect-ratio matched SVG viewBox 1000:500 → keine Lücken links/rechts wenn höhe begrenzt */
+      aspect-ratio: 1000 / 500;
+      max-height: 60vh;
+      /* width an höhe anpassen wenn max-height greift */
+      width: min(960px, calc(60vh * 2));
       /* Vignette: dezente dunkle Ränder, wie alte Druckkarte */
       box-shadow: inset 0 0 60px rgba(60, 40, 15, 0.18);
+      overflow: hidden;
     }
     svg.map {
       display: block;
       width: 100%;
-      height: auto;
-      max-height: 60vh;
+      height: 100%;
     }
 
     /* Info-Overlay als Bottom-Bar in der Karte — Container in Marine-Tint */
@@ -92,7 +97,7 @@
       left: 10px;
       right: 10px;
       max-height: 38%;
-      background: rgba(212, 221, 229, 0.94); /* --accent-soft mit Transparenz */
+      background: rgba(244, 236, 216, 0.96); /* warm Pergament */
       border: 1px solid var(--land-stroke);
       border-radius: 4px;
       padding: 10px 14px 12px;
@@ -247,7 +252,7 @@
       }
       .info-entry .name { font-size: 14px; }
       .info-entry .desc { font-size: 13px; }
-      svg.map { max-height: 56vh; }
+      .map-wrap { max-height: 56vh; width: min(100%, calc(56vh * 2)); }
     }
 
     /* Land */
