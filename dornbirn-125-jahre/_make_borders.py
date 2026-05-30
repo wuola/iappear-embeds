@@ -20,7 +20,9 @@ parser.add_argument("--height", type=float, default=500)
 args = parser.parse_args()
 
 FOLDER = os.path.dirname(os.path.abspath(__file__))
-GEO_PATH = os.path.join(FOLDER, "_ne_borders.geojson")
+GEO_COUNTRIES = os.path.join(FOLDER, "_ne_borders.geojson")          # admin_0 lines
+GEO_STATES = os.path.join(FOLDER, "_ne_states.geojson")              # admin_1 lines
+STATE_COUNTRIES = {"USA", "CAN"}  # Nur diese Länder Sub-Grenzen zeichnen
 
 print(f"Target: {args.target}")
 print(f"Range: lng [{args.lng_min} .. {args.lng_max}], lat [{args.lat_min} .. {args.lat_max}]")
@@ -34,34 +36,54 @@ def proj_y(lat):
     return (args.lat_max - lat) / (args.lat_max - args.lat_min) * args.height
 
 
-with open(GEO_PATH, "r", encoding="utf-8") as f:
-    geo = json.load(f)
-
-d_parts = []
-line_count = 0
-for feat in geo["features"]:
-    geom = feat["geometry"]
-    if geom["type"] == "LineString":
-        lines = [geom["coordinates"]]
-    elif geom["type"] == "MultiLineString":
-        lines = geom["coordinates"]
-    else:
-        continue
-
-    for line in lines:
-        if len(line) < 2:
+def render_lines(geo, include_filter=None):
+    """include_filter: function(feature) -> bool. None = alle."""
+    parts = []
+    count = 0
+    for feat in geo["features"]:
+        if include_filter and not include_filter(feat):
             continue
-        line_count += 1
-        sub = []
-        for i, (lng, lat) in enumerate(line):
-            x = round(proj_x(lng), 1)
-            y = round(proj_y(lat), 1)
-            sub.append(("M" if i == 0 else "L") + f" {x} {y}")
-        d_parts.append(" ".join(sub))
+        geom = feat["geometry"]
+        if geom["type"] == "LineString":
+            lines = [geom["coordinates"]]
+        elif geom["type"] == "MultiLineString":
+            lines = geom["coordinates"]
+        else:
+            continue
+        for line in lines:
+            if len(line) < 2:
+                continue
+            count += 1
+            sub = []
+            for i, (lng, lat) in enumerate(line):
+                x = round(proj_x(lng), 1)
+                y = round(proj_y(lat), 1)
+                sub.append(("M" if i == 0 else "L") + f" {x} {y}")
+            parts.append(" ".join(sub))
+    return parts, count
 
-path_d = " ".join(d_parts)
-print(f"Lines: {line_count}")
-print(f"Path-d length: {len(path_d)} chars (~{len(path_d)/1024:.1f} KB)")
+
+# Country borders (admin_0): alle
+with open(GEO_COUNTRIES, "r", encoding="utf-8") as f:
+    countries_geo = json.load(f)
+country_parts, country_count = render_lines(countries_geo)
+print(f"Country borders: {country_count} lines")
+
+# State borders (admin_1): nur USA + CAN
+state_parts, state_count = [], 0
+if os.path.exists(GEO_STATES):
+    with open(GEO_STATES, "r", encoding="utf-8") as f:
+        states_geo = json.load(f)
+    state_parts, state_count = render_lines(
+        states_geo,
+        include_filter=lambda f: f.get("properties", {}).get("ADM0_A3") in STATE_COUNTRIES,
+    )
+    print(f"State/Province borders (USA+CAN): {state_count} lines")
+else:
+    print("WARN: _ne_states.geojson nicht gefunden, States werden übersprungen")
+
+path_d = " ".join(country_parts + state_parts)
+print(f"Combined path-d length: {len(path_d)} chars (~{len(path_d)/1024:.1f} KB)")
 
 # Injizere in target HTML
 HTML_PATH = os.path.join(FOLDER, args.target)
