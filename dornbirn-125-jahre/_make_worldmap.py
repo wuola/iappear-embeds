@@ -1,20 +1,35 @@
 """
 Konvertiert ne_110m_land.geojson zu einem einzigen SVG-Path-d
-mit Atlantik-zentrierter Equirektangular-Projektion.
+mit Atlantik-zentrierter Equirektangular-Projektion und injiziert
+in eine Ziel-HTML.
 
-Projektion: lng [-130 ... +30] → x [0 ... 1000]
-            lat [0 ... 75]    → y [500 ... 0]
+Parametrisiert: target, lng-min/max, lat-min/max
 """
 import json
 import os
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--target", default="neue-welt.html")
+parser.add_argument("--lng-min", type=float, default=-130)
+parser.add_argument("--lng-max", type=float, default=30)
+parser.add_argument("--lat-min", type=float, default=0)
+parser.add_argument("--lat-max", type=float, default=75)
+parser.add_argument("--width", type=float, default=1000)
+parser.add_argument("--height", type=float, default=500)
+args = parser.parse_args()
 
 FOLDER = os.path.dirname(os.path.abspath(__file__))
 GEO_PATH = os.path.join(FOLDER, "_ne_land.geojson")
 OUT_PATH = os.path.join(FOLDER, "_land_path.txt")
 
-LNG_MIN, LNG_MAX = -130, 30
-LAT_MIN, LAT_MAX = 0, 75
-WIDTH, HEIGHT = 1000, 500
+LNG_MIN, LNG_MAX = args.lng_min, args.lng_max
+LAT_MIN, LAT_MAX = args.lat_min, args.lat_max
+WIDTH, HEIGHT = args.width, args.height
+TARGET_HTML = args.target
+
+print(f"Target: {TARGET_HTML}")
+print(f"Range: lng [{LNG_MIN} .. {LNG_MAX}], lat [{LAT_MIN} .. {LAT_MAX}], viewBox {WIDTH}x{HEIGHT}")
 
 
 def proj_x(lng):
@@ -70,22 +85,22 @@ with open(OUT_PATH, "w", encoding="utf-8") as f:
     f.write(path_d)
 print(f"Written: {OUT_PATH}")
 
-# Injizere in neue-welt.html
+# Injizere in target HTML
 import re
-HTML_PATH = os.path.join(FOLDER, "neue-welt.html")
+HTML_PATH = os.path.join(FOLDER, TARGET_HTML)
 if os.path.exists(HTML_PATH):
     with open(HTML_PATH, "r", encoding="utf-8") as f:
         html = f.read()
     pattern = re.compile(r'<path class="land" d="[^"]*"/>', re.DOTALL)
     n = len(pattern.findall(html))
     if n == 0:
-        print("WARN: kein <path class=\"land\".../> in neue-welt.html gefunden")
+        print(f"WARN: kein <path class=\"land\".../> in {TARGET_HTML} gefunden")
     else:
         replacement = f'<path class="land" d="{path_d}"/>'
         html_new = pattern.sub(replacement, html, count=1)
         with open(HTML_PATH, "w", encoding="utf-8") as f:
             f.write(html_new)
         kb = os.path.getsize(HTML_PATH) / 1024
-        print(f"Injected into neue-welt.html ({kb:.1f} KB)")
+        print(f"Injected into {TARGET_HTML} ({kb:.1f} KB)")
 else:
     print(f"WARN: {HTML_PATH} nicht gefunden")
