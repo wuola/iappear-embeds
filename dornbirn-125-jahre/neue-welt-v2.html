@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Von Dornbirn in die Neue Welt</title>
+  <title>Von Dornbirn in die Neue Welt — Karte</title>
   <style>
     :root {
       --bg: #f8f4ec;
@@ -71,7 +71,114 @@
       display: block;
       width: 100%;
       height: auto;
-      max-height: 56vh;
+      max-height: 80vh;
+    }
+
+    /* Info-Overlay (links über Nordpazifik/Alaska-Bereich) */
+    .info-box {
+      position: absolute;
+      top: 5%;
+      left: 1.5%;
+      width: 30%;
+      max-height: 88%;
+      overflow-y: auto;
+      background: rgba(250, 247, 240, 0.95);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 14px;
+      box-shadow: 0 4px 14px rgba(0,0,0,.08);
+      font-size: 13px;
+      line-height: 1.45;
+      z-index: 5;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    .info-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+    .info-stadt {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.01em;
+    }
+    .info-count {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .info-close {
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0 4px;
+      line-height: 1;
+    }
+    .info-close:hover { color: var(--accent); }
+
+    .info-intro {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .info-intro strong {
+      color: var(--fg);
+      font-weight: 600;
+    }
+
+    .info-entry {
+      padding: 8px 0;
+      border-top: 1px solid var(--line);
+    }
+    .info-entry:first-child { border-top: none; padding-top: 0; }
+    .info-entry .year {
+      font-weight: 700;
+      color: var(--accent);
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+    .info-entry .name {
+      font-weight: 600;
+      font-size: 13px;
+      margin-top: 1px;
+    }
+    .info-entry .desc {
+      font-size: 12px;
+      color: #333;
+      margin-top: 3px;
+    }
+    .info-entry.is-echo .name { color: var(--accent); }
+    .info-entry.is-special .name { color: #355d6b; }
+
+    @media (max-width: 600px) {
+      .info-box {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
+        width: 100%;
+        max-height: 50vh;
+        border-radius: 14px 14px 0 0;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        z-index: 50;
+        font-size: 14px;
+        padding: 14px 16px 20px;
+      }
+      .info-box.open {
+        transform: translateY(0);
+      }
+      .info-stadt { font-size: 17px; }
+      .info-entry .name { font-size: 14px; }
+      .info-entry .desc { font-size: 13px; }
+      svg.map { max-height: 60vh; }
     }
 
     /* Land */
@@ -313,7 +420,7 @@
   <header class="app">
     <h1>Von Dornbirn in die Neue Welt</h1>
     <div class="nav-links">
-      <a href="./">← Timeline</a> · <a href="dein-leben.html">dein Leben</a> · <a href="neue-welt-v2.html">Karte mit Overlay</a>
+      <a href="./">← Timeline</a> · <a href="dein-leben.html">dein Leben</a> · <a href="neue-welt.html">Karte mit Liste</a>
     </div>
   </header>
 
@@ -336,6 +443,21 @@
       <!-- Echo markers (small pulses at locations) -->
       <g id="echoes"></g>
     </svg>
+
+    <!-- Info-Overlay -->
+    <div class="info-box" id="info-box">
+      <div class="info-intro" id="info-intro">
+        <strong>Rund 1.000 Dornbirner</strong> wanderten zwischen ca. 1800 und 1938 in die USA aus. Tippe auf einen Punkt, um die Geschichten dahinter zu sehen.
+      </div>
+      <div class="info-header" id="info-header" style="display:none">
+        <div>
+          <span class="info-stadt" id="info-stadt"></span><br>
+          <span class="info-count" id="info-count"></span>
+        </div>
+        <button class="info-close" id="info-close" aria-label="schließen">×</button>
+      </div>
+      <div id="info-entries"></div>
+    </div>
   </div>
 
   <div class="controls">
@@ -351,8 +473,6 @@
       <button class="skip-btn special" data-jump="2011">→ 2011 Brücke zurück</button>
     </div>
   </div>
-
-  <div class="people" id="people"></div>
 
   <footer class="app">
     Rund 1.000 Dornbirner wanderten zwischen ca. 1800 und 1938 in die USA aus.<br>
@@ -668,21 +788,6 @@
           revShip.style.opacity = "0";
         }
 
-        // Highlight aktive Eintrag in Liste
-        document.querySelectorAll(".entry").forEach(el => el.classList.remove("active"));
-        JOURNEYS.forEach(j => {
-          const progress = (currentYear - j.year) / TRAVEL_DURATION;
-          if (progress >= 0 && progress < 2) {
-            const el = document.getElementById("entry-" + j.id);
-            if (el) el.classList.add("active");
-          }
-        });
-        ECHOES.forEach((e, i) => {
-          if (Math.abs(currentYear - e.year) < 2) {
-            const el = document.getElementById("entry-echo-" + i);
-            if (el) el.classList.add("active");
-          }
-        });
       }
 
       function tick(ts) {
@@ -728,46 +833,88 @@
         });
       });
 
-      // ---------- People list ----------
-      const peopleEl = document.getElementById("people");
-      const allEntries = [
-        ...JOURNEYS.map(j => ({ kind: "journey", year: j.year, data: j })),
-        ...ECHOES.map((e, i) => ({ kind: "echo", year: e.year, data: e, idx: i })),
-      ].sort((a, b) => a.year - b.year);
-
+      // ---------- Helpers ----------
       function escapeHtml(s) {
         return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
       }
 
-      let html = "<h2>Reisende & Echos</h2>";
-      allEntries.forEach(entry => {
-        if (entry.kind === "journey") {
-          const j = entry.data;
-          html += `
-            <div class="entry" id="entry-${j.id}" data-jump="${j.year}">
-              <div class="year">${j.year}</div>
-              <div>
-                <div class="name">${escapeHtml(j.name)}</div>
-                <div class="dest">→ ${escapeHtml(PLACES[j.dest].name)}</div>
-                <div class="desc">${escapeHtml(j.desc)}</div>
-              </div>
-            </div>`;
-        } else {
-          const e = entry.data;
-          const cls = e.isReverse ? "entry is-echo is-special" : "entry is-echo";
-          html += `
-            <div class="${cls}" id="entry-echo-${entry.idx}" data-jump="${e.year}">
-              <div class="year">${e.year}</div>
-              <div>
-                <div class="name">↪ ${escapeHtml(PLACES[e.at].name)}</div>
-                <div class="desc">${escapeHtml(e.text)}</div>
-              </div>
-            </div>`;
-        }
-      });
-      peopleEl.innerHTML = html;
+      // ---------- Info-Box ----------
+      const infoBox = document.getElementById("info-box");
+      const infoIntro = document.getElementById("info-intro");
+      const infoHeader = document.getElementById("info-header");
+      const infoStadt = document.getElementById("info-stadt");
+      const infoCount = document.getElementById("info-count");
+      const infoEntries = document.getElementById("info-entries");
 
-      // ---------- Two-way Klick: Karte <-> Liste ----------
+      function showInfo(destKey) {
+        const place = PLACES[destKey];
+        if (!place) return;
+
+        // Sammle Einträge zur Stadt
+        const items = [];
+        JOURNEYS.filter(j => j.dest === destKey).forEach(j => items.push({
+          kind: "journey", year: j.year, data: j,
+        }));
+        ECHOES.forEach((e, i) => {
+          if (e.at === destKey) items.push({ kind: "echo", year: e.year, data: e, idx: i });
+        });
+        items.sort((a, b) => a.year - b.year);
+
+        if (!items.length) {
+          infoEntries.innerHTML = '<div class="info-entry"><div class="desc">Keine Einträge für diesen Ort.</div></div>';
+        } else {
+          infoEntries.innerHTML = items.map(it => {
+            if (it.kind === "journey") {
+              const j = it.data;
+              return `<div class="info-entry" data-jump="${j.year}">
+                <div class="year">${j.year}</div>
+                <div class="name">${escapeHtml(j.name)}</div>
+                <div class="desc">${escapeHtml(j.desc)}</div>
+              </div>`;
+            } else {
+              const e = it.data;
+              const cls = "info-entry is-echo" + (e.isReverse ? " is-special" : "");
+              return `<div class="${cls}" data-jump="${e.year}">
+                <div class="year">${e.year}</div>
+                <div class="name">↪ Echo</div>
+                <div class="desc">${escapeHtml(e.text)}</div>
+              </div>`;
+            }
+          }).join("");
+        }
+
+        infoStadt.textContent = place.name;
+        const nPeople = items.filter(it => it.kind === "journey").length;
+        const nEchos = items.filter(it => it.kind === "echo").length;
+        const parts = [];
+        if (nPeople) parts.push(nPeople + (nPeople === 1 ? " Reisende:r" : " Reisende"));
+        if (nEchos) parts.push(nEchos + " Echo" + (nEchos === 1 ? "" : "s"));
+        infoCount.textContent = parts.join(" · ");
+
+        infoIntro.style.display = "none";
+        infoHeader.style.display = "flex";
+        infoBox.classList.add("open");
+      }
+
+      function hideInfo() {
+        infoHeader.style.display = "none";
+        infoEntries.innerHTML = "";
+        infoIntro.style.display = "block";
+        infoBox.classList.remove("open");
+      }
+
+      document.getElementById("info-close").addEventListener("click", hideInfo);
+
+      // Klick auf Eintrag innerhalb Info-Box → setYear + Karte pulse
+      infoEntries.addEventListener("click", (ev) => {
+        const card = ev.target.closest("[data-jump]");
+        if (!card) return;
+        setYear(parseFloat(card.dataset.jump));
+        playing = false;
+        playBtn.textContent = "▶";
+      });
+
+      // ---------- Karte Click → Info-Box öffnen ----------
       function flashCity(destKey) {
         document.querySelectorAll(".city.selected").forEach(el => el.classList.remove("selected"));
         const cityEl = document.getElementById("city-" + destKey);
@@ -777,56 +924,12 @@
         }
       }
 
-      function flashEntries(destKey) {
-        document.querySelectorAll(".entry.highlight").forEach(el => el.classList.remove("highlight"));
-        const matchIds = [];
-        JOURNEYS.forEach(j => { if (j.dest === destKey) matchIds.push("entry-" + j.id); });
-        ECHOES.forEach((e, i) => { if (e.at === destKey) matchIds.push("entry-echo-" + i); });
-        let firstEl = null;
-        matchIds.forEach((id, idx) => {
-          const el = document.getElementById(id);
-          if (el) {
-            el.classList.add("highlight");
-            if (idx === 0) firstEl = el;
-          }
-        });
-        if (firstEl) {
-          firstEl.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-        setTimeout(() => {
-          document.querySelectorAll(".entry.highlight").forEach(el => el.classList.remove("highlight"));
-        }, 2500);
-      }
-
-      // Klick auf Stadt-Punkt → Liste highlighten + scroll
       document.getElementById("cities").addEventListener("click", (ev) => {
         const circle = ev.target.closest(".city");
         if (!circle || circle.classList.contains("is-home")) return;
         const key = circle.id.replace(/^city-/, "");
-        flashEntries(key);
+        showInfo(key);
         flashCity(key);
-      });
-
-      // Klick auf Eintrag in Liste → Karte highlighten + setYear (wie vorher)
-      peopleEl.addEventListener("click", (ev) => {
-        const card = ev.target.closest("[data-jump]");
-        if (!card) return;
-        setYear(parseFloat(card.dataset.jump));
-        playing = false;
-        playBtn.textContent = "▶";
-
-        // Welche Stadt gehört zum Eintrag?
-        let destKey = null;
-        const id = card.id || "";
-        if (id.startsWith("entry-echo-")) {
-          const idx = parseInt(id.replace("entry-echo-", ""), 10);
-          destKey = ECHOES[idx] && ECHOES[idx].at;
-        } else if (id.startsWith("entry-")) {
-          const jId = id.replace(/^entry-/, "");
-          const j = JOURNEYS.find(x => x.id === jId);
-          destKey = j && j.dest;
-        }
-        if (destKey) flashCity(destKey);
       });
 
       // Initial
