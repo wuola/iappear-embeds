@@ -140,14 +140,18 @@
     .ship-mast { stroke: var(--ship); stroke-width: 1; }
     .ship.reverse .ship-hull { fill: #355d6b; }
 
-    /* Echo bubbles (kleine Punkte am Ort + Tooltip beim Klick) */
+    /* Echo bubbles (kleine Punkte am Ort, rein dekorativ) */
     .echo-marker {
       fill: var(--accent);
       opacity: 0;
       transition: opacity .5s;
+      pointer-events: none;
     }
     .echo-marker.visible { opacity: 1; }
     .echo-marker.special { fill: #355d6b; }
+
+    /* Routen und Schiffe nicht klickbar (würden Stadt-Klicks abfangen) */
+    .route-path, .ship { pointer-events: none; }
 
     /* Controls */
     .controls {
