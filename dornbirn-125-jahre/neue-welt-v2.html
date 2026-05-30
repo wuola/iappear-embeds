@@ -753,9 +753,9 @@
       const START_YEAR = 1800;
       const END_YEAR = 2026;
       // Adaptive Geschwindigkeit: schnell zwischen Events, langsam wenn was läuft
-      const SLOW_SPEED = 1.8; // Jahre pro Sekunde während eines Events
+      const SLOW_SPEED = 0.8; // Jahre pro Sekunde während eines Events (langsam = Zeit zum Lesen)
       const FAST_SPEED = 14;  // Jahre pro Sekunde zwischen Events
-      const REVERSE_DURATION = 1.2; // visualisierte Dauer der Brücke-zurück-Animation
+      const REVERSE_DURATION = 1.8; // visualisierte Dauer der Brücke-zurück-Animation
 
       function isEventActive() {
         for (const j of JOURNEYS) {
@@ -1010,7 +1010,7 @@
 
       // ---------- Auto-Show während Animation ----------
       let lastFocusedDest = null;
-      const ECHO_WINDOW = 2;  // Jahre, in denen ein Echo "aktiv" bleibt
+      const ECHO_WINDOW = 2.8;  // Jahre, in denen ein Echo "aktiv" bleibt
 
       function pickFocus() {
         // Priorität 1: gerade laufendes Schiff
