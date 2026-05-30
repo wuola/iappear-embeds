@@ -297,9 +297,18 @@
     /* Ships */
     .ship { opacity: 0; transition: opacity .25s; }
     .ship-hull { fill: var(--ship); }
-    .ship-sail { fill: #fff; stroke: var(--ship); stroke-width: 0.8; }
-    .ship-mast { stroke: var(--ship); stroke-width: 1; }
+    .ship-sail {
+      fill: #fdfaf3;
+      stroke: var(--ship);
+      stroke-width: 0.6;
+      stroke-linejoin: round;
+    }
+    .ship-mast { stroke: var(--ship); stroke-width: 0.8; }
+    .ship-flag { fill: var(--accent); }
+    .ship-wake { stroke: rgba(255,255,255,0.7); stroke-width: 1; fill: none; }
     .ship.reverse .ship-hull { fill: #355d6b; }
+    .ship.reverse .ship-flag { fill: #355d6b; }
+    .ship.reverse .ship-sail { stroke: #355d6b; }
 
     /* Echo bubbles (kleine Punkte am Ort, rein dekorativ) */
     .echo-marker {
@@ -704,7 +713,8 @@
         citiesG.appendChild(label);
       });
 
-      // Schiffe
+      // Schiffe: Drei-Master-Segelschiff (typisch für Auswanderer-Ära 1800-1880).
+      // Bug zeigt nach rechts (+x), Segel nach oben (-y) — Spiegelung bei Links-Fahrt im update().
       const shipsG = document.getElementById("ships");
       function makeShip(id, classes) {
         const g = document.createElementNS(svgNS, "g");
@@ -712,26 +722,76 @@
         g.classList.add("ship");
         (classes || []).forEach(c => g.classList.add(c));
 
+        // Rumpf mit leichter Bug-Spitze und Heck-Krümmung
         const hull = document.createElementNS(svgNS, "path");
-        hull.setAttribute("d", "M -7 -1 L 7 -1 L 5 3 L -5 3 Z");
+        hull.setAttribute("d", "M -11 0 Q -13 1.5 -11 4 L 9 4 Q 13 2 11 0 Z");
         hull.classList.add("ship-hull");
         g.appendChild(hull);
 
-        const mast = document.createElementNS(svgNS, "line");
-        mast.setAttribute("x1", "0"); mast.setAttribute("y1", "-1");
-        mast.setAttribute("x2", "0"); mast.setAttribute("y2", "-9");
-        mast.classList.add("ship-mast");
-        g.appendChild(mast);
+        // Vordermast + Rahsegel
+        const mast1 = document.createElementNS(svgNS, "line");
+        mast1.setAttribute("x1", "-7"); mast1.setAttribute("y1", "0");
+        mast1.setAttribute("x2", "-7"); mast1.setAttribute("y2", "-12");
+        mast1.classList.add("ship-mast");
+        g.appendChild(mast1);
 
-        const sail = document.createElementNS(svgNS, "path");
-        sail.setAttribute("d", "M 0 -8 L 5 -2 L 0 -2 Z");
-        sail.classList.add("ship-sail");
-        g.appendChild(sail);
+        const sail1 = document.createElementNS(svgNS, "path");
+        sail1.setAttribute("d", "M -10 -11 L -4 -11 L -4 -3 L -10 -3 Z");
+        sail1.classList.add("ship-sail");
+        g.appendChild(sail1);
+
+        // Hauptmast (höchster) + zwei Rahsegel
+        const mast2 = document.createElementNS(svgNS, "line");
+        mast2.setAttribute("x1", "0"); mast2.setAttribute("y1", "0");
+        mast2.setAttribute("x2", "0"); mast2.setAttribute("y2", "-16");
+        mast2.classList.add("ship-mast");
+        g.appendChild(mast2);
+
+        const sail2a = document.createElementNS(svgNS, "path");
+        sail2a.setAttribute("d", "M -3 -15 L 3 -15 L 3 -10 L -3 -10 Z");
+        sail2a.classList.add("ship-sail");
+        g.appendChild(sail2a);
+
+        const sail2b = document.createElementNS(svgNS, "path");
+        sail2b.setAttribute("d", "M -4 -9 L 4 -9 L 4 -3 L -4 -3 Z");
+        sail2b.classList.add("ship-sail");
+        g.appendChild(sail2b);
+
+        // Besanmast (hinten, kürzer) + Rahsegel
+        const mast3 = document.createElementNS(svgNS, "line");
+        mast3.setAttribute("x1", "7"); mast3.setAttribute("y1", "0");
+        mast3.setAttribute("x2", "7"); mast3.setAttribute("y2", "-10");
+        mast3.classList.add("ship-mast");
+        g.appendChild(mast3);
+
+        const sail3 = document.createElementNS(svgNS, "path");
+        sail3.setAttribute("d", "M 4 -9 L 10 -9 L 10 -3 L 4 -3 Z");
+        sail3.classList.add("ship-sail");
+        g.appendChild(sail3);
+
+        // Wimpel oben am Hauptmast
+        const flag = document.createElementNS(svgNS, "path");
+        flag.setAttribute("d", "M 0 -16 L 4 -15 L 0 -14 Z");
+        flag.classList.add("ship-flag");
+        g.appendChild(flag);
 
         return g;
       }
       JOURNEYS.forEach(j => shipsG.appendChild(makeShip("ship-" + j.id)));
       shipsG.appendChild(makeShip("ship-reverse", ["reverse"]));
+
+      // Schiff-Transform: bei Fahrt nach links horizontal spiegeln, damit Segel oben bleiben
+      function shipTransform(pt, pt2) {
+        const dx = pt2.x - pt.x;
+        const dy = pt2.y - pt.y;
+        if (dx >= 0) {
+          const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+          return `translate(${pt.x}, ${pt.y}) rotate(${angle})`;
+        }
+        // dx < 0: scale(-1, 1) flippt horizontal, rotate kümmert sich um den Neigungswinkel
+        const angle = Math.atan2(dy, -dx) * 180 / Math.PI;
+        return `translate(${pt.x}, ${pt.y}) scale(-1, 1) rotate(${angle})`;
+      }
 
       // Echo markers (kleine Punkte am Ort)
       const echoesG = document.getElementById("echoes");
@@ -823,8 +883,7 @@
             const pathLen = routeEl.getTotalLength();
             const pt = routeEl.getPointAtLength(pathLen * progress);
             const pt2 = routeEl.getPointAtLength(Math.min(pathLen, pathLen * progress + 2));
-            const angle = Math.atan2(pt2.y - pt.y, pt2.x - pt.x) * 180 / Math.PI;
-            shipEl.setAttribute("transform", `translate(${pt.x}, ${pt.y}) rotate(${angle})`);
+            shipEl.setAttribute("transform", shipTransform(pt, pt2));
             routeEl.classList.add("visible");
             routeEl.classList.add("active");
           }
@@ -853,8 +912,7 @@
             const len = revPath.getTotalLength();
             const pt = revPath.getPointAtLength(len * rp);
             const pt2 = revPath.getPointAtLength(Math.min(len, len * rp + 2));
-            const ang = Math.atan2(pt2.y - pt.y, pt2.x - pt.x) * 180 / Math.PI;
-            revShip.setAttribute("transform", `translate(${pt.x}, ${pt.y}) rotate(${ang})`);
+            revShip.setAttribute("transform", shipTransform(pt, pt2));
             revShip.style.opacity = "1";
           } else {
             revPath.classList.add("visible");
