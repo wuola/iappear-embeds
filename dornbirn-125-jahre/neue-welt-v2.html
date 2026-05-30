@@ -197,6 +197,11 @@
     .info-entry.is-echo .name { color: var(--accent); }
     .info-entry.is-special .name { color: #355d6b; }
 
+    /* Fade-Übergänge beim Wechsel */
+    .info-header, #info-entries {
+      transition: opacity 0.25s ease;
+    }
+
     /* Mobile: bottom-sheet (slide-up), vertikal scrollend */
     @media (max-width: 600px) {
       .info-box {
@@ -747,7 +752,27 @@
       // ---------- TIME / UPDATE ----------
       const START_YEAR = 1800;
       const END_YEAR = 2026;
-      const PLAY_SPEED = 6; // Jahre pro Sekunde (langsamer = mehr Zeit für Info-Box)
+      // Adaptive Geschwindigkeit: schnell zwischen Events, langsam wenn was läuft
+      const SLOW_SPEED = 1.8; // Jahre pro Sekunde während eines Events
+      const FAST_SPEED = 14;  // Jahre pro Sekunde zwischen Events
+      const REVERSE_DURATION = 1.2; // visualisierte Dauer der Brücke-zurück-Animation
+
+      function isEventActive() {
+        for (const j of JOURNEYS) {
+          const progress = (currentYear - j.year) / TRAVEL_DURATION;
+          if (progress >= 0 && progress < 1) return true;
+        }
+        for (const e of ECHOES) {
+          // Reverse-Echo (Brücke) hat eigene Animation-Dauer
+          const window = e.isReverse ? REVERSE_DURATION : ECHO_WINDOW;
+          if (currentYear >= e.year && currentYear < e.year + window) return true;
+        }
+        return false;
+      }
+
+      function getCurrentSpeed() {
+        return isEventActive() ? SLOW_SPEED : FAST_SPEED;
+      }
 
       let currentYear = START_YEAR;
       let playing = false;
@@ -846,7 +871,7 @@
         const dt = (ts - lastTs) / 1000;
         lastTs = ts;
         if (playing) {
-          let next = currentYear + dt * PLAY_SPEED;
+          let next = currentYear + dt * getCurrentSpeed();
           if (next >= END_YEAR) {
             next = END_YEAR;
             playing = false;
@@ -897,7 +922,31 @@
       const infoCount = document.getElementById("info-count");
       const infoEntries = document.getElementById("info-entries");
 
+      let currentShownDest = null;
+
       function showInfo(destKey) {
+        const place = PLACES[destKey];
+        if (!place) return;
+        if (destKey === currentShownDest && infoBox.classList.contains("open")) return;
+
+        if (currentShownDest && currentShownDest !== destKey) {
+          // Fade out → render → fade in
+          infoHeader.style.opacity = "0";
+          infoEntries.style.opacity = "0";
+          setTimeout(() => {
+            _populateInfo(destKey);
+            infoHeader.style.opacity = "1";
+            infoEntries.style.opacity = "1";
+          }, 230);
+        } else {
+          _populateInfo(destKey);
+          infoHeader.style.opacity = "1";
+          infoEntries.style.opacity = "1";
+        }
+        currentShownDest = destKey;
+      }
+
+      function _populateInfo(destKey) {
         const place = PLACES[destKey];
         if (!place) return;
 
@@ -956,6 +1005,7 @@
         infoEntries.innerHTML = "";
         infoIntro.style.display = "block";
         infoBox.classList.remove("open");
+        currentShownDest = null;
       }
 
       // ---------- Auto-Show während Animation ----------
