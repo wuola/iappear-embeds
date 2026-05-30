@@ -330,7 +330,7 @@
 
   <footer class="app">
     Rund 1.000 Dornbirner wanderten zwischen ca. 1800 und 1938 in die USA aus.<br>
-    Quelle: Meinrad Pichler, „Von Dornbirn in die Neue Welt", Stadt Dornbirn 2012.
+    Quelle: Meinrad Pichler, „Von Dornbirn in die Neue Welt", Stadt Dornbirn 2012 · Karte: Natural Earth (Public Domain)
   </footer>
 
   <script>
@@ -348,21 +348,37 @@
       function projY(lat) { return (LAT_MAX - lat) / (LAT_MAX - LAT_MIN) * MAP_H; }
 
       const PLACES_LL = {
-        dornbirn:    { lng:   9.7, lat: 47.4, name: "Dornbirn",        isHome: true },
-        philadelphia:{ lng: -75.2, lat: 39.9, name: "Philadelphia" },
-        dubuque:     { lng: -90.7, lat: 42.5, name: "Dubuque, Iowa" },
-        augusta:     { lng: -82.0, lat: 33.5, name: "Augusta, GA" },
-        newUlm:      { lng: -94.5, lat: 44.3, name: "New Ulm, MN" },
-        stPaul:      { lng: -93.1, lat: 44.9, name: "St. Paul, MN" },
-        carrollton:  { lng: -93.5, lat: 39.4, name: "Carrollton, MO" },
-        zanzenberg:  { lng: -94.1, lat: 30.1, name: "Zanzenberg, TX" },
-        newYork:     { lng: -74.0, lat: 40.7, name: "New York" },
-        montana:     { lng:-112.0, lat: 46.6, name: "Montana" },
+        dornbirn:    { lng:   9.7, lat: 47.4, name: "Dornbirn",        isHome: true, label: "right" },
+        philadelphia:{ lng: -75.2, lat: 39.9, name: "Philadelphia",    label: "bottomRight" },
+        dubuque:     { lng: -90.7, lat: 42.5, name: "Dubuque, Iowa",   label: "right" },
+        augusta:     { lng: -82.0, lat: 33.5, name: "Augusta, GA",     label: "right" },
+        newUlm:      { lng: -94.5, lat: 44.3, name: "New Ulm, MN",     label: "bottomLeft" },
+        stPaul:      { lng: -93.1, lat: 44.9, name: "St. Paul, MN",    label: "topLeft" },
+        carrollton:  { lng: -93.5, lat: 39.4, name: "Carrollton, MO",  label: "bottomLeft" },
+        zanzenberg:  { lng: -94.1, lat: 30.1, name: "Zanzenberg, TX",  label: "left" },
+        newYork:     { lng: -74.0, lat: 40.7, name: "New York",        label: "topRight" },
+        montana:     { lng:-112.0, lat: 46.6, name: "Montana",         label: "right" },
+      };
+
+      // Label-Positionierung relativ zum Stadtpunkt
+      const LABEL_OFFSETS = {
+        right:       { dx:  10, dy:   4, anchor: "start"  },
+        left:        { dx: -10, dy:   4, anchor: "end"    },
+        top:         { dx:   0, dy: -10, anchor: "middle" },
+        bottom:      { dx:   0, dy:  16, anchor: "middle" },
+        topRight:    { dx:   8, dy:  -7, anchor: "start"  },
+        topLeft:     { dx:  -8, dy:  -7, anchor: "end"    },
+        bottomRight: { dx:   8, dy:  14, anchor: "start"  },
+        bottomLeft:  { dx:  -8, dy:  14, anchor: "end"    },
       };
 
       const PLACES = {};
       Object.entries(PLACES_LL).forEach(([k, v]) => {
-        PLACES[k] = { x: projX(v.lng), y: projY(v.lat), name: v.name, isHome: !!v.isHome };
+        PLACES[k] = {
+          x: projX(v.lng), y: projY(v.lat),
+          name: v.name, isHome: !!v.isHome,
+          label: v.label || "right",
+        };
       });
 
       const JOURNEYS = [
@@ -477,11 +493,10 @@
         citiesG.appendChild(c);
 
         const label = document.createElementNS(svgNS, "text");
-        // Label mittig über der Stadt, ausgenommen Dornbirn (links davon, da am Kartenrand)
-        const isEdge = p.isHome;
-        label.setAttribute("x", isEdge ? p.x - 10 : p.x);
-        label.setAttribute("y", p.y - 10);
-        label.setAttribute("text-anchor", isEdge ? "end" : "middle");
+        const off = LABEL_OFFSETS[p.label] || LABEL_OFFSETS.right;
+        label.setAttribute("x", p.x + off.dx);
+        label.setAttribute("y", p.y + off.dy);
+        label.setAttribute("text-anchor", off.anchor);
         label.setAttribute("id", "label-" + key);
         label.textContent = p.name;
         label.classList.add("city-label");
