@@ -103,10 +103,19 @@
       fill: var(--land);
       stroke: var(--accent);
       stroke-width: 2;
-      transition: fill .3s, r .3s;
+      transition: fill .3s, stroke-width .15s;
+      cursor: pointer;
     }
     .city.arrived { fill: var(--accent); }
-    .city.is-home { fill: var(--accent); stroke: var(--accent); }
+    .city.is-home { fill: var(--accent); stroke: var(--accent); cursor: default; }
+    .city.selected {
+      stroke-width: 5;
+      animation: city-glow 1.2s ease-out 2;
+    }
+    @keyframes city-glow {
+      0%, 100% { stroke-width: 5; }
+      50% { stroke-width: 9; }
+    }
 
     .city-label {
       font-size: 10px;
@@ -242,6 +251,19 @@
       padding-right: 8px;
       margin-left: -8px;
       margin-right: -8px;
+    }
+    .entry.highlight {
+      animation: entry-flash 2.4s ease-out 1 forwards;
+      border-radius: 6px;
+      padding-left: 8px;
+      padding-right: 8px;
+      margin-left: -8px;
+      margin-right: -8px;
+    }
+    @keyframes entry-flash {
+      0%   { background: var(--accent-soft); }
+      70%  { background: var(--accent-soft); }
+      100% { background: transparent; }
     }
     .entry .year {
       font-weight: 700;
@@ -741,12 +763,66 @@
       });
       peopleEl.innerHTML = html;
 
+      // ---------- Two-way Klick: Karte <-> Liste ----------
+      function flashCity(destKey) {
+        document.querySelectorAll(".city.selected").forEach(el => el.classList.remove("selected"));
+        const cityEl = document.getElementById("city-" + destKey);
+        if (cityEl) {
+          cityEl.classList.add("selected");
+          setTimeout(() => cityEl.classList.remove("selected"), 2400);
+        }
+      }
+
+      function flashEntries(destKey) {
+        document.querySelectorAll(".entry.highlight").forEach(el => el.classList.remove("highlight"));
+        const matchIds = [];
+        JOURNEYS.forEach(j => { if (j.dest === destKey) matchIds.push("entry-" + j.id); });
+        ECHOES.forEach((e, i) => { if (e.at === destKey) matchIds.push("entry-echo-" + i); });
+        let firstEl = null;
+        matchIds.forEach((id, idx) => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.classList.add("highlight");
+            if (idx === 0) firstEl = el;
+          }
+        });
+        if (firstEl) {
+          firstEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        setTimeout(() => {
+          document.querySelectorAll(".entry.highlight").forEach(el => el.classList.remove("highlight"));
+        }, 2500);
+      }
+
+      // Klick auf Stadt-Punkt → Liste highlighten + scroll
+      document.getElementById("cities").addEventListener("click", (ev) => {
+        const circle = ev.target.closest(".city");
+        if (!circle || circle.classList.contains("is-home")) return;
+        const key = circle.id.replace(/^city-/, "");
+        flashEntries(key);
+        flashCity(key);
+      });
+
+      // Klick auf Eintrag in Liste → Karte highlighten + setYear (wie vorher)
       peopleEl.addEventListener("click", (ev) => {
         const card = ev.target.closest("[data-jump]");
         if (!card) return;
         setYear(parseFloat(card.dataset.jump));
         playing = false;
         playBtn.textContent = "▶";
+
+        // Welche Stadt gehört zum Eintrag?
+        let destKey = null;
+        const id = card.id || "";
+        if (id.startsWith("entry-echo-")) {
+          const idx = parseInt(id.replace("entry-echo-", ""), 10);
+          destKey = ECHOES[idx] && ECHOES[idx].at;
+        } else if (id.startsWith("entry-")) {
+          const jId = id.replace(/^entry-/, "");
+          const j = JOURNEYS.find(x => x.id === jId);
+          destKey = j && j.dest;
+        }
+        if (destKey) flashCity(destKey);
       });
 
       // Initial
