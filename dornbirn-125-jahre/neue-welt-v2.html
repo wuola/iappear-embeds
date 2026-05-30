@@ -6,17 +6,21 @@
   <title>Von Dornbirn in die Neue Welt — Karte</title>
   <style>
     :root {
-      --bg: #f8f4ec;
-      --sea: #cde4f0;
-      --land: #f1ecd9;
-      --land-stroke: #c9c2a8;
-      --fg: #1a1a1a;
-      --muted: #7a7a7a;
-      --line: #e0ddd6;
-      --accent: #b34a2a;
-      --accent-soft: #f3e3dd;
-      --ship: #2a3a4a;
-      --route: #b34a2a;
+      /* Palette „Alte Seekarte" — Pergament, Sepia-Tinte, Marine-Blau */
+      --bg: #f4ecd8;          /* vergilbtes Pergament */
+      --paper: #ede2c2;       /* hell-Pergament, leicht wärmer */
+      --sea: #cdd8d9;         /* trübes Eismeer-Blau, fast vergilbt */
+      --land: #e6d9b5;        /* warmes Sand-Beige */
+      --land-stroke: #a78f5c; /* mittelbrauner Tinten-Rand */
+      --fg: #28221a;          /* dunkler Sepia-Tintenbraun */
+      --muted: #7a6a4e;       /* mittelbraun warm */
+      --line: #c6b890;        /* warm-grau-beige */
+      --accent: #1d3a5c;      /* tinten-Marine-Blau */
+      --accent-soft: #d4dde5; /* sehr dezenter Pergament-Blau-Tint */
+      --ship: #1c2935;        /* fast Tintenschwarz */
+      --route: #8a4a26;       /* Sepia-Tinte für Routen */
+      --highlight: #c79a3e;   /* Senf-Gold für Wimpel und Hervorhebungen */
+      --reverse: #2c5258;     /* dunkles Petrol für Brücke-zurück */
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
@@ -35,37 +39,44 @@
       text-align: center;
     }
     header.app h1 {
-      font-size: 17px;
+      font-size: 19px;
       margin: 0;
       font-weight: 700;
-      letter-spacing: -0.01em;
+      letter-spacing: 0.02em;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--fg);
     }
     .nav-links {
       font-size: 11px;
       color: var(--muted);
       margin-top: 4px;
+      font-style: italic;
     }
     .nav-links a { color: var(--muted); text-decoration: none; }
     .nav-links a:hover { text-decoration: underline; }
 
     .year-display {
       text-align: center;
-      padding: 2px 0 6px;
-      font-size: 38px;
+      padding: 4px 0 8px;
+      font-size: 42px;
       font-weight: 700;
-      color: var(--accent);
+      color: var(--route);
       font-variant-numeric: tabular-nums;
-      letter-spacing: -0.02em;
+      letter-spacing: 0.04em;
       line-height: 1;
+      font-family: Georgia, "Times New Roman", serif;
+      font-style: italic;
     }
 
     .map-wrap {
       background: var(--sea);
       max-width: 960px;
       margin: 0 auto;
-      border-top: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
+      border-top: 1px solid var(--land-stroke);
+      border-bottom: 1px solid var(--land-stroke);
       position: relative;
+      /* Vignette: dezente dunkle Ränder, wie alte Druckkarte */
+      box-shadow: inset 0 0 60px rgba(60, 40, 15, 0.18);
     }
     svg.map {
       display: block;
@@ -74,23 +85,23 @@
       max-height: 60vh;
     }
 
-    /* Info-Overlay als Bottom-Bar in der Karte (horizontal scroll) */
+    /* Info-Overlay als Bottom-Bar in der Karte (horizontal scroll), wie altes Beiblatt */
     .info-box {
       position: absolute;
-      bottom: 8px;
-      left: 8px;
-      right: 8px;
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
       max-height: 38%;
-      background: rgba(250, 247, 240, 0.95);
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 8px 12px 10px;
-      box-shadow: 0 -2px 12px rgba(0,0,0,.08);
+      background: rgba(244, 236, 216, 0.96);
+      border: 1px solid var(--land-stroke);
+      border-radius: 4px;
+      padding: 10px 14px 12px;
+      box-shadow: 0 -2px 10px rgba(60, 40, 15, 0.15), 0 0 0 1px rgba(60, 40, 15, 0.05);
       font-size: 13px;
-      line-height: 1.4;
+      line-height: 1.45;
       z-index: 5;
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -111,11 +122,13 @@
       flex: 1 1 auto;
     }
     .info-stadt {
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 700;
-      color: var(--accent);
-      letter-spacing: -0.01em;
+      color: var(--route);
+      letter-spacing: 0.02em;
       white-space: nowrap;
+      font-family: Georgia, "Times New Roman", serif;
+      font-style: italic;
     }
     .info-count {
       font-size: 10px;
@@ -164,10 +177,10 @@
 
     .info-entry {
       flex: 0 0 250px;
-      padding: 8px 10px;
+      padding: 9px 11px;
       border: 1px solid var(--line);
-      border-radius: 6px;
-      background: rgba(255,255,255,0.5);
+      border-radius: 3px;
+      background: rgba(255,253,245,0.55);
     }
     .info-entry-header {
       display: flex;
@@ -184,10 +197,12 @@
     }
     .info-entry .year {
       font-weight: 700;
-      color: var(--accent);
-      font-size: 12px;
+      color: var(--route);
+      font-size: 13px;
       font-variant-numeric: tabular-nums;
       flex: 0 0 auto;
+      font-family: Georgia, "Times New Roman", serif;
+      font-style: italic;
     }
     .info-entry .desc {
       font-size: 12px;
@@ -195,7 +210,7 @@
       line-height: 1.4;
     }
     .info-entry.is-echo .name { color: var(--accent); }
-    .info-entry.is-special .name { color: #355d6b; }
+    .info-entry.is-special .name { color: var(--reverse); }
 
     /* Fade-Übergänge beim Wechsel */
     .info-header, #info-entries {
@@ -236,7 +251,12 @@
     }
 
     /* Land */
-    .land { fill: var(--land); stroke: var(--land-stroke); stroke-width: 1.5; }
+    .land {
+      fill: var(--land);
+      stroke: var(--land-stroke);
+      stroke-width: 1.2;
+      stroke-linejoin: round;
+    }
     .label-region {
       font-size: 13px;
       fill: #9a9486;
@@ -245,37 +265,38 @@
       pointer-events: none;
     }
 
-    /* Routes */
+    /* Routes — wie alte Tintenlinien auf Pergament */
     .route-path {
       fill: none;
       stroke: var(--route);
-      stroke-width: 2;
-      stroke-dasharray: 3 5;
+      stroke-width: 1.6;
+      stroke-dasharray: 2 4;
       stroke-linecap: round;
       opacity: 0;
       transition: opacity .35s;
     }
-    .route-path.visible { opacity: 0.5; }
-    .route-path.active { opacity: 1; stroke-dasharray: none; stroke-width: 2.5; }
-    .route-reverse { stroke: #355d6b; }
+    .route-path.visible { opacity: 0.55; }
+    .route-path.active { opacity: 1; stroke-dasharray: none; stroke-width: 2.2; }
+    .route-reverse { stroke: var(--reverse); }
 
     /* Cities */
     .city {
-      fill: var(--land);
-      stroke: var(--accent);
-      stroke-width: 2;
+      fill: var(--paper);
+      stroke: var(--route);
+      stroke-width: 1.8;
       transition: fill .3s, stroke-width .15s;
       cursor: pointer;
     }
-    .city.arrived { fill: var(--accent); }
-    .city.is-home { fill: var(--accent); stroke: var(--accent); cursor: default; }
+    .city.arrived { fill: var(--route); }
+    .city.is-home { fill: var(--route); stroke: var(--route); cursor: default; }
     .city.selected {
-      stroke-width: 5;
+      stroke-width: 4;
+      stroke: var(--highlight);
       animation: city-glow 1.2s ease-out 2;
     }
     @keyframes city-glow {
-      0%, 100% { stroke-width: 5; }
-      50% { stroke-width: 9; }
+      0%, 100% { stroke-width: 4; }
+      50% { stroke-width: 8; }
     }
 
     .city-label {
@@ -285,11 +306,13 @@
       opacity: 0;
       transition: opacity .4s;
       pointer-events: none;
+      font-family: Georgia, "Times New Roman", serif;
+      font-style: italic;
     }
     .city-label.visible { opacity: 1; }
     .city-label-home {
-      font-size: 12px;
-      fill: var(--accent);
+      font-size: 13px;
+      fill: var(--route);
       font-weight: 700;
       opacity: 1;
     }
@@ -304,21 +327,24 @@
       stroke-linejoin: round;
     }
     .ship-mast { stroke: var(--ship); stroke-width: 0.8; }
-    .ship-flag { fill: var(--accent); }
+    .ship-flag { fill: var(--highlight); }
     .ship-wake { stroke: rgba(255,255,255,0.7); stroke-width: 1; fill: none; }
-    .ship.reverse .ship-hull { fill: #355d6b; }
-    .ship.reverse .ship-flag { fill: #355d6b; }
-    .ship.reverse .ship-sail { stroke: #355d6b; }
+    .ship.reverse .ship-hull { fill: var(--reverse); }
+    .ship.reverse .ship-flag { fill: var(--highlight); }
+    .ship.reverse .ship-mast { stroke: var(--reverse); }
+    .ship.reverse .ship-sail { stroke: var(--reverse); }
 
     /* Echo bubbles (kleine Punkte am Ort, rein dekorativ) */
     .echo-marker {
-      fill: var(--accent);
+      fill: none;
+      stroke: var(--highlight);
+      stroke-width: 1.5;
       opacity: 0;
       transition: opacity .5s;
       pointer-events: none;
     }
     .echo-marker.visible { opacity: 1; }
-    .echo-marker.special { fill: #355d6b; }
+    .echo-marker.special { stroke: var(--reverse); }
 
     /* Routen und Schiffe nicht klickbar (würden Stadt-Klicks abfangen) */
     .route-path, .ship { pointer-events: none; }
@@ -460,7 +486,7 @@
       margin-top: 5px;
     }
     .entry.is-echo .name { color: var(--accent); }
-    .entry.is-special .name { color: #355d6b; }
+    .entry.is-special .name { color: var(--reverse); }
 
     footer.app {
       max-width: 760px;
@@ -803,9 +829,7 @@
         m.setAttribute("r", 7);
         m.setAttribute("id", "echo-" + i);
         m.classList.add("echo-marker");
-        m.setAttribute("fill", "none");
-        m.setAttribute("stroke", e.isReverse ? "#355d6b" : "#b34a2a");
-        m.setAttribute("stroke-width", "1.5");
+        if (e.isReverse) m.classList.add("special");
         echoesG.appendChild(m);
       });
 
