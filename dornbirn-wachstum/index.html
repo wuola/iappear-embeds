@@ -22,18 +22,20 @@
         text-shadow:0 0 4px rgba(255,255,255,.35), 0 0 14px rgba(255,255,255,.18), 0 2px 12px #000}
   #count{font-size:14px;color:var(--muted);margin-top:2px}
   #count b{color:var(--fg);font-variant-numeric:tabular-nums}
-  #controls{left:50%;bottom:26px;transform:translateX(-50%);display:flex;flex-direction:column;gap:7px;
+  #bottombar{position:absolute;left:0;right:0;bottom:28px;z-index:5;display:flex;align-items:flex-end;
+             gap:18px;padding:0 26px;pointer-events:none}
+  #controls{position:static;flex:0 1 720px;min-width:0;max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:7px;
             background:rgba(18,20,28,.78);backdrop-filter:blur(8px);padding:11px 20px 12px;border-radius:22px;
             pointer-events:auto;box-shadow:0 8px 30px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.07)}
-  #spark{width:44vw;max-width:580px;height:40px;display:block}
+  #spark{width:100%;height:40px;display:block}
   #spark text{fill:var(--muted);font-size:9px}
   #row{display:flex;align-items:center;gap:16px}
   #play{cursor:pointer;border:none;background:var(--accent);color:#1a1206;width:42px;height:42px;border-radius:50%;
         font-size:17px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;transition:transform .1s}
   #play:active{transform:scale(.92)}
-  #slider{width:44vw;max-width:580px;accent-color:var(--accent);cursor:pointer;height:4px}
+  #slider{flex:1 1 auto;min-width:0;accent-color:var(--accent);cursor:pointer;height:4px}
   #speed{pointer-events:auto;color:var(--muted);font-size:12px;cursor:pointer;user-select:none;min-width:22px}
-  #legend{left:26px;bottom:30px;background:rgba(18,20,28,.72);backdrop-filter:blur(8px);padding:12px 14px;
+  #legend{position:static;flex:0 0 auto;background:rgba(18,20,28,.72);backdrop-filter:blur(8px);padding:12px 14px;
           border-radius:12px;border:1px solid rgba(255,255,255,.07);pointer-events:auto}
   #legend .bar{height:10px;width:240px;border-radius:5px;
        background:linear-gradient(90deg,#440154,#414487,#2a788e,#22a884,#7ad151,#bddf26,#fde725)}
@@ -50,8 +52,8 @@
   #sources .row .yr{font-variant-numeric:tabular-nums;font-weight:600;color:var(--fg);width:30px;flex:0 0 auto}
   #sources .row .src{color:var(--muted)}
   #sources .foot{margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.08);font-size:9.5px;line-height:1.5;color:#7a8090}
-  .credit{position:absolute;right:28px;bottom:14px;font-size:10px;color:#5a606e;z-index:5;text-align:right}
-  #logo{position:absolute;right:28px;bottom:38px;z-index:5;height:38px;pointer-events:none;opacity:.9}
+  .credit{position:absolute;right:28px;bottom:8px;font-size:10px;color:#5a606e;z-index:4;text-align:right}
+  #logo{position:static;flex:0 0 auto;height:38px;pointer-events:none;opacity:.9}
   #logo svg{height:100%;width:auto;display:block;
             filter:drop-shadow(0 0 5px rgba(255,246,224,.38)) drop-shadow(0 1px 6px rgba(0,0,0,.5))}
   #logo svg path{fill:#fbf9f4}
@@ -63,6 +65,7 @@
   @media (max-width:760px){
     html,body{height:auto;min-height:100%;overflow-x:hidden;overflow-y:auto}
     body{display:flex;flex-direction:column}
+    #bottombar{display:contents}
     #vignette{display:none}
     #loading{position:fixed}
     .panel{position:static;pointer-events:auto;max-width:none}
@@ -71,7 +74,7 @@
     #yearbox{order:2;margin:0 16px 4px;text-align:left}
     #year{font-size:52px}
     #map{order:3;position:relative;inset:auto;width:100%;height:58vh;flex:0 0 auto}
-    #controls{order:4;left:auto;bottom:auto;transform:none;margin:10px 12px;border-radius:16px}
+    #controls{order:4;flex:0 0 auto;min-width:0;max-width:none;margin:10px 12px;border-radius:16px}
     #spark{width:100%;max-width:none}
     #slider{width:auto;flex:1 1 auto;max-width:none}
     #legend{order:5;margin:8px 16px}
@@ -88,6 +91,8 @@
 <div id="loading">Lade Gebäude …</div>
 <div class="panel" id="title"><h1>Dornbirn wächst</h1><p>Siedlungsentwicklung 1826 – 2025<br>Geodatenrekonstruktion</p></div>
 <div class="panel" id="yearbox"><div id="year">1826</div><div id="count"><b id="cnum">0</b> von <span id="cnt-total">14.524</span> Gebäuden</div></div>
+<div class="panel" id="sources"></div>
+<div id="bottombar">
 <div class="panel" id="legend"><div class="lbl">Baujahr</div><div class="bar"></div>
   <div class="ticks"><span>1826</span><span>1900</span><span>1950</span><span>1980</span><span>2025</span></div>
   <div class="ctx">
@@ -96,7 +101,6 @@
     <span><i style="border-top:2px dashed #6b7280"></i>Bahn</span>
     <span><i style="border-top:2px solid #586070"></i>Straßen</span>
   </div></div>
-<div class="panel" id="sources"></div>
 <div class="panel" id="controls">
   <svg id="spark" preserveAspectRatio="none"></svg>
   <div id="row">
@@ -105,12 +109,13 @@
     <span id="speed" title="Geschwindigkeit">1×</span>
   </div>
 </div>
-<div class="credit">Daten: OSM · VOGIS-Luftbilder/Karten · Urmappe 1857 / Negrelli 1826</div>
 <div id="logo"><svg viewBox="0 0 123.56 233.11" xmlns="http://www.w3.org/2000/svg" aria-label="i.appear">
 <path d="M37.54,233.11v-14.79c4.75-.91,10.4-1.83,15.88-2.19v-55.86c-4.38-.73-10.59-1.46-15.88-1.83v-14.6c11.5-1.46,25.56-2.01,39.06-1.64v73.93c5.11.36,10.4,1.28,14.79,2.19v14.79h-53.85Z" fill="#fff"/>
 <path d="M61.69,75.15c-8,0-14.37-6.37-14.37-14.19s6.37-14.01,14.37-14.01,14.55,6.18,14.55,14.01-6.55,14.19-14.55,14.19Z" fill="#fff"/>
 <circle cx="61.78" cy="61.78" r="50.28" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="23"/>
 </svg></div>
+</div>
+<div class="credit">Daten: OSM · VOGIS-Luftbilder/Karten · Urmappe 1857 / Negrelli 1826</div>
 
 <script>
 const YMIN=1826, YMAX=2025, YSTART=1810;   // YSTART = Vorlauf: leere Buehne vor dem ersten Baujahr (1826)
