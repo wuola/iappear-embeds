@@ -57,6 +57,28 @@
   #logo svg circle{stroke:#fbf9f4}
   #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
            background:#0b0c12;z-index:20;font-size:15px;color:var(--muted)}
+
+  /* ---------- MOBILE: alles untereinander stapeln ---------- */
+  @media (max-width:760px){
+    html,body{height:auto;min-height:100%;overflow-x:hidden;overflow-y:auto}
+    body{display:flex;flex-direction:column}
+    #vignette{display:none}
+    #loading{position:fixed}
+    .panel{position:static;pointer-events:auto;max-width:none}
+    #title{order:1;margin:16px 16px 2px}
+    #title h1{font-size:23px}
+    #yearbox{order:2;margin:0 16px 4px;text-align:left}
+    #year{font-size:52px}
+    #map{order:3;position:relative;inset:auto;width:100%;height:58vh;flex:0 0 auto}
+    #controls{order:4;left:auto;bottom:auto;transform:none;margin:10px 12px;border-radius:16px}
+    #spark{width:100%;max-width:none}
+    #slider{width:auto;flex:1 1 auto;max-width:none}
+    #legend{order:5;margin:8px 16px}
+    #legend .bar{width:100%}
+    #sources{order:6;margin:4px 16px 6px}
+    .credit{order:7;position:static;right:auto;bottom:auto;text-align:left;margin:4px 16px}
+    #logo{order:8;position:static;right:auto;bottom:auto;margin:6px 16px 22px;opacity:.85}
+  }
 </style>
 </head>
 <body>
@@ -307,9 +329,13 @@ async function init(){
       'line-opacity-transition':{duration:750,delay:0}
     }});
     // Variante A2: KEIN Aufleucht-Glow — Gebaeude erscheinen nur durch Opacity-Anstieg (fill-opacity-transition oben)
-    map.fitBounds(bounds(gj.features),{padding:34,duration:0});
-    map.setZoom(map.getZoom()-0.45);   // etwas rauszoomen -> Stadt kleiner, mehr Rand
-    { const cc=map.getContainer(); map.setCenter(map.unproject([cc.clientWidth/2, cc.clientHeight/2 + cc.clientHeight*0.06])); }   // Stadt etwas nach oben schieben
+    const isMobile=window.matchMedia('(max-width:760px)').matches;
+    map.resize();   // Container hat im Stack-Layout eine andere Groesse
+    map.fitBounds(bounds(gj.features),{padding:isMobile?14:34,duration:0});
+    if(!isMobile){   // Desktop: etwas rauszoomen + Stadt nach oben (gegen die Overlay-Cards); mobil unnoetig
+      map.setZoom(map.getZoom()-0.45);
+      const cc=map.getContainer(); map.setCenter(map.unproject([cc.clientWidth/2, cc.clientHeight/2 + cc.clientHeight*0.06]));
+    }
     document.getElementById('cnt-total').textContent=total.toLocaleString('de-DE');
     ready=true;
     document.getElementById('loading').style.display='none';
@@ -333,7 +359,7 @@ slider.oninput=e=>{ playing=false; playBtn.textContent='▶'; setYear(+e.target.
 document.getElementById('speed').onclick=function(){
   let i=(SPEEDS.indexOf(speed)+1)%SPEEDS.length; speed=SPEEDS[i]; this.textContent=speed+'×';
 };
-window.addEventListener('resize',()=>{ if(ready){ buildSpark(); updateSpark(); } });
+window.addEventListener('resize',()=>{ if(ready){ map.resize(); buildSpark(); updateSpark(); } });
 </script>
 </body>
 </html>
