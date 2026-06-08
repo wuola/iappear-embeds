@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Dornbirn wächst — Variante A2 (Viridis · Zahl farbig)</title>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"/>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+  :root{ --fg:#f3f0ea; --muted:#9aa0ad; --accent:#fb8e3c; }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#0b0c12;font-family:'Segoe UI',system-ui,sans-serif;color:var(--fg);overflow:hidden}
+  #map{position:absolute;inset:0}
+  #vignette{position:absolute;inset:0;z-index:2;pointer-events:none;
+    background:radial-gradient(ellipse 78% 78% at 50% 44%, rgba(0,0,0,0) 52%, rgba(0,0,0,.58) 100%)}
+  .panel{position:absolute;z-index:5;pointer-events:none}
+  #title{top:22px;left:26px;max-width:300px}
+  #title h1{margin:0;font-size:26px;font-weight:600;letter-spacing:.3px;text-shadow:0 2px 12px #000}
+  #title p{margin:4px 0 0;font-size:13px;color:var(--muted);text-shadow:0 1px 8px #000}
+  #yearbox{top:18px;right:28px;text-align:right}
+  #year{font-size:64px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;
+        text-shadow:0 0 4px rgba(255,255,255,.35), 0 0 14px rgba(255,255,255,.18), 0 2px 12px #000}
+  #count{font-size:14px;color:var(--muted);margin-top:2px}
+  #count b{color:var(--fg);font-variant-numeric:tabular-nums}
+  #controls{left:50%;bottom:26px;transform:translateX(-50%);display:flex;flex-direction:column;gap:7px;
+            background:rgba(18,20,28,.78);backdrop-filter:blur(8px);padding:11px 20px 12px;border-radius:22px;
+            pointer-events:auto;box-shadow:0 8px 30px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.07)}
+  #spark{width:44vw;max-width:580px;height:40px;display:block}
+  #spark text{fill:var(--muted);font-size:9px}
+  #row{display:flex;align-items:center;gap:16px}
+  #play{cursor:pointer;border:none;background:var(--accent);color:#1a1206;width:42px;height:42px;border-radius:50%;
+        font-size:17px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;transition:transform .1s}
+  #play:active{transform:scale(.92)}
+  #slider{width:44vw;max-width:580px;accent-color:var(--accent);cursor:pointer;height:4px}
+  #speed{pointer-events:auto;color:var(--muted);font-size:12px;cursor:pointer;user-select:none;min-width:22px}
+  #legend{left:26px;bottom:30px;background:rgba(18,20,28,.72);backdrop-filter:blur(8px);padding:12px 14px;
+          border-radius:12px;border:1px solid rgba(255,255,255,.07);pointer-events:auto}
+  #legend .bar{height:10px;width:240px;border-radius:5px;
+       background:linear-gradient(90deg,#440154,#414487,#2a788e,#22a884,#7ad151,#bddf26,#fde725)}
+  #legend .ticks{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:5px}
+  #legend .lbl{font-size:11px;color:var(--muted);margin-bottom:6px;letter-spacing:.4px;text-transform:uppercase}
+  #legend .ctx{margin-top:10px;font-size:10px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+  #legend .ctx i{display:inline-block;width:14px;height:0;vertical-align:middle;margin-right:5px}
+  #sources{left:26px;top:200px;max-width:300px;background:rgba(18,20,28,.72);backdrop-filter:blur(8px);
+           padding:10px 13px;border-radius:12px;border:1px solid rgba(255,255,255,.07);pointer-events:auto}
+  #sources .lbl{font-size:11px;color:var(--muted);margin-bottom:7px;letter-spacing:.4px;text-transform:uppercase}
+  #sources .row{display:flex;align-items:center;gap:8px;font-size:10.5px;line-height:1.62}
+  #sources .row .sw{width:10px;height:10px;border-radius:2px;flex:0 0 auto}
+  #sources .row .yr{font-variant-numeric:tabular-nums;font-weight:600;color:var(--fg);width:30px;flex:0 0 auto}
+  #sources .row .src{color:var(--muted)}
+  #sources .foot{margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.08);font-size:9.5px;line-height:1.5;color:#7a8090}
+  .credit{position:absolute;right:28px;bottom:14px;font-size:10px;color:#5a606e;z-index:5;text-align:right}
+  #logo{position:absolute;right:28px;bottom:38px;z-index:5;height:38px;pointer-events:none;opacity:.9}
+  #logo svg{height:100%;width:auto;display:block;
+            filter:drop-shadow(0 0 5px rgba(255,246,224,.38)) drop-shadow(0 1px 6px rgba(0,0,0,.5))}
+  #logo svg path{fill:#fbf9f4}
+  #logo svg circle{stroke:#fbf9f4}
+  #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+           background:#0b0c12;z-index:20;font-size:15px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="vignette"></div>
+<div id="loading">Lade Gebäude …</div>
+<div class="panel" id="title"><h1>Dornbirn wächst</h1><p>Siedlungsentwicklung 1826 – 2025 · jedes Gebäude erscheint zu seinem geschätzten Baujahr</p></div>
+<div class="panel" id="yearbox"><div id="year">1826</div><div id="count"><b id="cnum">0</b> von <span id="cnt-total">14.524</span> Gebäuden</div></div>
+<div class="panel" id="legend"><div class="lbl">Baujahr</div><div class="bar"></div>
+  <div class="ticks"><span>1826</span><span>1900</span><span>1950</span><span>1980</span><span>2025</span></div>
+  <div class="ctx">
+    <span><i style="border-top:2px solid #3a6fa0"></i>Dornbirner Ache</span>
+    <span><i style="border-top:2px solid #3b6ea5;opacity:.7"></i>Mühlbäche</span>
+    <span><i style="border-top:2px dashed #6b7280"></i>Bahn</span>
+  </div></div>
+<div class="panel" id="sources"></div>
+<div class="panel" id="controls">
+  <svg id="spark" preserveAspectRatio="none"></svg>
+  <div id="row">
+    <button id="play" title="Abspielen / Pause">▮▮</button>
+    <input id="slider" type="range" min="1826" max="2025" value="1826" step="1"/>
+    <span id="speed" title="Geschwindigkeit">1×</span>
+  </div>
+</div>
+<div class="credit">Daten: OSM · VOGIS-Luftbilder/Karten · Urmappe 1857 / Negrelli 1826</div>
+<div id="logo"><svg viewBox="0 0 123.56 233.11" xmlns="http://www.w3.org/2000/svg" aria-label="i.appear">
+<path d="M37.54,233.11v-14.79c4.75-.91,10.4-1.83,15.88-2.19v-55.86c-4.38-.73-10.59-1.46-15.88-1.83v-14.6c11.5-1.46,25.56-2.01,39.06-1.64v73.93c5.11.36,10.4,1.28,14.79,2.19v14.79h-53.85Z" fill="#fff"/>
+<path d="M61.69,75.15c-8,0-14.37-6.37-14.37-14.19s6.37-14.01,14.37-14.01,14.55,6.18,14.55,14.01-6.55,14.19-14.55,14.19Z" fill="#fff"/>
+<circle cx="61.78" cy="61.78" r="50.28" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="23"/>
+</svg></div>
+
+<script>
+const YMIN=1826, YMAX=2025;
+// magma-artige Farbrampe nach Baujahr
+const COLOR=['interpolate',['linear'],['get','built_from'],
+  1826,'#440154', 1875,'#414487', 1915,'#2a788e', 1955,'#22a884', 1985,'#7ad151', 2010,'#bddf26', 2025,'#fde725'];
+// gleiche Rampe in JS (fuer Sparkline-Balken) — Viridis
+const RAMP=[[1826,[68,1,84]],[1875,[65,68,135]],[1915,[42,120,142]],[1955,[34,168,132]],[1985,[122,209,81]],[2010,[189,223,38]],[2025,[253,231,37]]];
+function epochColor(y){
+  let a=RAMP[0],b=RAMP[RAMP.length-1];
+  for(let i=0;i<RAMP.length-1;i++){ if(y>=RAMP[i][0]&&y<=RAMP[i+1][0]){a=RAMP[i];b=RAMP[i+1];break;} }
+  const t=(y-a[0])/((b[0]-a[0])||1), c=a[1].map((v,k)=>Math.round(v+(b[1][k]-v)*t));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+// gleiche Rampe, aber Richtung Weiss aufgehellt -> die grosse Jahreszahl bleibt auf Dunkel lesbar
+function yearColor(y){
+  let a=RAMP[0],b=RAMP[RAMP.length-1];
+  for(let i=0;i<RAMP.length-1;i++){ if(y>=RAMP[i][0]&&y<=RAMP[i+1][0]){a=RAMP[i];b=RAMP[i+1];break;} }
+  const t=(y-a[0])/((b[0]-a[0])||1), mix=0;   // 0 = exakt die Haeuserfarbe; >0 = Richtung Weiss aufhellen
+  const c=a[1].map((v,k)=>{ const raw=v+(b[1][k]-v)*t; return Math.round(raw+(255-raw)*mix); });
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+
+const map=new maplibregl.Map({
+  container:'map', attributionControl:false,
+  style:{version:8, sources:{}, layers:[{id:'bg',type:'background',paint:{'background-color':'#0b0c12'}}]},
+  center:[9.742,47.412], zoom:13.4, pitch:0, minZoom:11, maxZoom:17
+});
+
+let year=YMIN, playing=true, last=null, speed=1;   // Jahre pro Sekunde-Faktor
+const SPEEDS=[0.5,1,2,4];
+const PACE_MULT=3.2;   // Gesamt-Tempo (groesser = schneller); skaliert die ganze Kurve (~8 s gesamt bei 1x)
+// Tempo-Kurve: Jahre/Sekunde je nach Jahr. Schnell durch die leere Frühzeit,
+// hinten raus immer langsamer (dort liegen die dichten Epochen nah beieinander).
+const PACE=[[1826,42],[1900,40],[1930,10],[1950,6],[1980,5],[2000,4],[2025,3]];
+function rateAt(y){
+  const P=PACE;
+  if(y<=P[0][0]) return P[0][1]*PACE_MULT;
+  for(let i=0;i<P.length-1;i++){ if(y<=P[i+1][0]){ const t=(y-P[i][0])/(P[i+1][0]-P[i][0]); return (P[i][1]+(P[i+1][1]-P[i][1])*t)*PACE_MULT; } }
+  return P[P.length-1][1]*PACE_MULT;
+}
+
+// --- Performance-Kern -------------------------------------------------------
+// feature-state 'shown' wird je Gebaeude genau EINMAL gesetzt (Fade gratis ueber
+// die Paint-Transition). 'flash' leuchtet neu Erschienene kurz auf. Pro Frame
+// passiert fast nichts -> fluessig auch bei 14.524 Polygonen.
+let idsByYear=new Map();      // Baujahr -> [feature-ids]
+let total=0, shownYear=YMIN-1, shownCount=0, ready=false;
+let flashQueue=[];            // {t0, ids} der zuletzt aufgeleuchteten Kohorten
+let nowT=0;                   // letzter rAF-Zeitstempel (ms)
+const FLASH_HOLD_MS=700;      // wie lange voll aufgeleuchtet, bevor das Verglimmen startet (zeitbasiert!)
+
+function reveal(toYear, doFlash){
+  if(!ready) return;
+  if(toYear>shownYear){                       // vorwaerts: neu erschienene einblenden
+    for(let y=shownYear+1;y<=toYear;y++){
+      const ids=idsByYear.get(y); if(!ids) continue;
+      const st=doFlash?{shown:true,flash:true}:{shown:true};
+      for(const id of ids) map.setFeatureState({source:'b',id},st);
+      shownCount+=ids.length;
+      if(doFlash) flashQueue.push({t0:nowT, ids});
+    }
+  } else if(toYear<shownYear){                 // rueckwaerts (Slider): wieder ausblenden
+    for(let y=shownYear;y>toYear;y--){
+      const ids=idsByYear.get(y); if(!ids) continue;
+      for(const id of ids) map.setFeatureState({source:'b',id},{shown:false,flash:false});
+      shownCount-=ids.length;
+    }
+    flashQueue.length=0;
+  }
+  shownYear=toYear;
+}
+
+// zeitbasiert: jede Kohorte glueht FLASH_HOLD_MS voll, dann setzt das weiche
+// Verglimmen ueber die fill-opacity-transition ein -> gleich smooth bei jedem Tempo
+function expireFlashes(){
+  if(!flashQueue.length) return;
+  let i=0;
+  while(i<flashQueue.length){
+    const e=flashQueue[i];
+    if(nowT-e.t0>=FLASH_HOLD_MS){ for(const id of e.ids) map.setFeatureState({source:'b',id},{flash:false}); flashQueue.splice(i,1); }
+    else i++;
+  }
+}
+
+function setYear(y, doFlash){
+  year=Math.max(YMIN,Math.min(YMAX,y));
+  const yi=Math.floor(year);
+  const yEl=document.getElementById('year'); yEl.textContent=yi; yEl.style.color=yearColor(year);
+  document.getElementById('slider').value=yi;
+  reveal(yi, doFlash);
+  document.getElementById('cnum').textContent=shownCount.toLocaleString('de-DE');
+  updateSpark();
+}
+
+// Karte komplett leeren (Start / Neustart) -> auch die 1826er wachsen aus dem Nichts rein
+function resetEmpty(){
+  reveal(YMIN-1, false);     // alles ausblenden (rueckwaerts)
+  flashQueue.length=0;
+  year=YMIN; last=null;
+  const yEl=document.getElementById('year'); yEl.textContent=YMIN; yEl.style.color=yearColor(YMIN);
+  document.getElementById('slider').value=YMIN;
+  document.getElementById('cnum').textContent='0';
+  updateSpark();
+}
+
+function frame(t){
+  nowT=t;
+  if(last==null) last=t;
+  const dt=(t-last)/1000; last=t;
+  if(playing){
+    const prev=Math.floor(year);
+    year=Math.min(YMAX, year+dt*rateAt(year)*speed);
+    if(Math.floor(year)!==prev || year>=YMAX) setYear(year, false);  // A2: kein Blinken, nur Opacity-Anstieg
+    if(year>=YMAX){ playing=false; document.getElementById('play').textContent='↻'; }
+  }
+  expireFlashes();   // immer: Glows verglimmen zeitbasiert (auch beim Pausieren / am Ende)
+  requestAnimationFrame(frame);
+}
+
+// --- Datenquellen-Card (16 Zeitschnitte, je Epoche + Farbe) -----------------
+const SOURCES=[
+  [1826,'Negrelli-Plan'],[1857,'Urmappe (Kataster)'],
+  [1930,'Luftbild S/W'],[1950,'Luftbild S/W'],[1960,'Luftbild S/W'],[1970,'Luftbild S/W'],
+  [1980,'Orthofoto Farbe/IR'],[1990,'Orthofoto Farbe/IR'],[2001,'Orthofoto Farbe/IR'],
+  [2009,'Orthofoto Farbe/IR'],[2012,'Orthofoto Farbe/IR'],[2015,'Orthofoto Farbe/IR'],
+  [2018,'Orthofoto Farbe/IR'],[2020,'Orthofoto Farbe/IR'],[2022,'Orthofoto Farbe/IR'],[2025,'Orthofoto Farbe/IR']
+];
+function buildSources(){
+  const el=document.getElementById('sources'); if(!el) return;
+  let s='<div class="lbl">Datenquellen · 16 Zeitschnitte</div>';
+  for(const [y,src] of SOURCES){
+    s+=`<div class="row"><span class="sw" style="background:${epochColor(y)}"></span><span class="yr">${y}</span><span class="src">${src}</span></div>`;
+  }
+  s+='<div class="foot">Bildquellen: VOGIS / Land Vorarlberg<br>Karten 1826/1857: © BEV / Stadtarchiv Dornbirn</div>';
+  el.innerHTML=s;
+}
+
+// --- Sparkline (Balken je Epoche + mitlaufender Zeiger) ---------------------
+function buildSpark(){
+  const svg=document.getElementById('spark');
+  const W=svg.clientWidth||560, H=svg.clientHeight||40, pad=3, baseY=H-11;
+  const X=y=>pad+(y-YMIN)/(YMAX-YMIN)*(W-2*pad);
+  const years=[...idsByYear.keys()].sort((a,b)=>a-b);
+  const maxC=Math.max(...years.map(y=>idsByYear.get(y).length));
+  let s='';
+  for(let i=0;i<years.length;i++){
+    const y=years[i], next=years[i+1]!==undefined?years[i+1]:YMAX;
+    const x0=X(y), x1=X(Math.max(y+1,next)), c=idsByYear.get(y).length;
+    const h=Math.max(2,(baseY-2)*(c/maxC));
+    s+=`<rect class="sb" data-y="${y}" x="${x0.toFixed(1)}" y="${(baseY-h).toFixed(1)}" width="${Math.max(1.6,x1-x0-1).toFixed(1)}" height="${h.toFixed(1)}" fill="${epochColor(y)}" opacity="0.16"/>`;
+  }
+  // Achsen-Jahre
+  [1850,1900,1950,2000].forEach(y=>{ s+=`<text x="${X(y).toFixed(1)}" y="${H-1}" text-anchor="middle">${y}</text>`; });
+  // Zeiger
+  s+=`<line id="spark-head" x1="0" y1="0" x2="0" y2="${baseY}" stroke="#fff" stroke-width="1.2" opacity="0.9"/>`;
+  svg.innerHTML=s;
+}
+function updateSpark(){
+  const svg=document.getElementById('spark'); if(!svg||!svg.firstChild) return;
+  const W=svg.clientWidth||560, pad=3, px=pad+(year-YMIN)/(YMAX-YMIN)*(W-2*pad);
+  const head=svg.querySelector('#spark-head'); if(head){ head.setAttribute('x1',px); head.setAttribute('x2',px); }
+  svg.querySelectorAll('rect.sb').forEach(r=>{ r.setAttribute('opacity', (+r.getAttribute('data-y')<=year)?'0.72':'0.15'); });
+}
+
+function bounds(features){
+  let xn=180,yn=90,xx=-180,yx=-90;
+  const add=p=>{ if(p[0]<xn)xn=p[0]; if(p[0]>xx)xx=p[0]; if(p[1]<yn)yn=p[1]; if(p[1]>yx)yx=p[1]; };
+  for(const f of features){ const g=f.geometry; if(!g) continue;
+    if(g.type==='Polygon') g.coordinates.forEach(r=>r.forEach(add));
+    else if(g.type==='MultiPolygon') g.coordinates.forEach(pp=>pp.forEach(r=>r.forEach(add))); }
+  return [[xn,yn],[xx,yx]];
+}
+
+async function init(){
+  try{
+    const [gj, ctx] = await Promise.all([
+      fetch('dornbirn_wachstum.geojson').then(r=>r.json()),
+      fetch('context_faded.geojson').then(r=>r.json()).catch(()=>null)
+    ]);
+    total=gj.features.length;
+    // Rand-Feather: Gebaeude nahe der Datengrenze sanft auffaden -> loest den harten Rechteck-Rand auf
+    const bb=bounds(gj.features), Wb=bb[0][0], Sb=bb[0][1], Eb=bb[1][0], Nb=bb[1][1];
+    const FEATHER=0.09;   // Faden ueber die aeusseren ~9% der Datenbox
+    const efOf=(lon,lat)=>{ const nx=(lon-Wb)/(Eb-Wb), ny=(lat-Sb)/(Nb-Sb);
+      let t=Math.min(nx,1-nx,ny,1-ny)/FEATHER; t=Math.max(0,Math.min(1,t)); return Math.round(t*t*(3-2*t)*100)/100; };
+    for(let i=0;i<total;i++){
+      const f=gj.features[i]; f.id=i;
+      let y=f.properties.built_from|0;
+      if(y<YMIN)y=YMIN; if(y>YMAX)y=YMAX;
+      (idsByYear.get(y) || idsByYear.set(y,[]).get(y)).push(i);
+      const g=f.geometry, rep=g&&(g.type==='Polygon'?g.coordinates[0][0]:g.coordinates[0][0][0]);
+      f.properties.ef=rep?efOf(rep[0],rep[1]):1;
+    }
+    // Kontext ZUERST (liegt unter den Gebaeuden)
+    if(ctx){
+      map.addSource('ctx',{type:'geojson',data:ctx});
+      map.addLayer({id:'ctx-rail',type:'line',source:'ctx',filter:['==',['get','kind'],'rail'],
+        layout:{'line-cap':'round'},paint:{'line-color':'#6b7280','line-width':1.0,'line-opacity':['*',0.30,['get','op']],'line-dasharray':[2.5,2.5],'line-blur':0.4}});
+      map.addLayer({id:'ctx-canal',type:'line',source:'ctx',filter:['==',['get','kind'],'canal'],
+        paint:{'line-color':'#3b6ea5','line-width':0.8,'line-opacity':['*',0.30,['get','op']],'line-blur':0.4}});
+      map.addLayer({id:'ctx-river',type:'line',source:'ctx',filter:['==',['get','kind'],'river'],
+        layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#3a6fa0','line-width':2.2,'line-opacity':['*',0.55,['get','op']],'line-blur':0.8}});
+    }
+    map.addSource('b',{type:'geojson',data:gj});
+    map.addLayer({id:'bld',type:'fill',source:'b',paint:{
+      'fill-color':COLOR,
+      'fill-opacity':['case',['boolean',['feature-state','shown'],false],['*',0.92,['get','ef']],0],
+      'fill-opacity-transition':{duration:750,delay:0}
+    }});
+    map.addLayer({id:'bld-line',type:'line',source:'b',paint:{
+      'line-color':'#fff2cc','line-width':0.55,
+      'line-opacity':['case',['boolean',['feature-state','shown'],false],['*',0.20,['get','ef']],0],
+      'line-opacity-transition':{duration:750,delay:0}
+    }});
+    // Variante A2: KEIN Aufleucht-Glow — Gebaeude erscheinen nur durch Opacity-Anstieg (fill-opacity-transition oben)
+    map.fitBounds(bounds(gj.features),{padding:34,duration:0});
+    document.getElementById('cnt-total').textContent=total.toLocaleString('de-DE');
+    ready=true;
+    document.getElementById('loading').style.display='none';
+    buildSpark(); buildSources();
+    resetEmpty(); requestAnimationFrame(frame);   // leer starten, dann waechst alles rein
+  }catch(e){ document.getElementById('loading').textContent='Fehler: '+e.message; console.error(e); }
+}
+if(map.isStyleLoaded()) init(); else map.on('load', init);
+
+// Controls
+const playBtn=document.getElementById('play'), slider=document.getElementById('slider');
+playBtn.onclick=()=>{
+  if(year>=YMAX){ resetEmpty(); }   // Neustart: erst leeren, dann von vorn wachsen
+  playing=!playing; playBtn.textContent=playing?'▮▮':'▶';
+};
+slider.oninput=e=>{ playing=false; playBtn.textContent='▶'; setYear(+e.target.value, false); };
+document.getElementById('speed').onclick=function(){
+  let i=(SPEEDS.indexOf(speed)+1)%SPEEDS.length; speed=SPEEDS[i]; this.textContent=speed+'×';
+};
+window.addEventListener('resize',()=>{ if(ready){ buildSpark(); updateSpark(); } });
+</script>
+</body>
+</html>
