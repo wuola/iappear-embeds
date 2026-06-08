@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Dornbirn wächst — Variante A2 (Viridis · Zahl farbig)</title>
+<title>Dornbirn wächst — Siedlungsentwicklung 1826–2025</title>
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"/>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <style>
@@ -63,7 +63,7 @@
 <div id="map"></div>
 <div id="vignette"></div>
 <div id="loading">Lade Gebäude …</div>
-<div class="panel" id="title"><h1>Dornbirn wächst</h1><p>Siedlungsentwicklung 1826 – 2025 · jedes Gebäude erscheint zu seinem geschätzten Baujahr</p></div>
+<div class="panel" id="title"><h1>Dornbirn wächst</h1><p>Siedlungsentwicklung 1826 – 2025<br>Geodatenrekonstruktion</p></div>
 <div class="panel" id="yearbox"><div id="year">1826</div><div id="count"><b id="cnum">0</b> von <span id="cnt-total">14.524</span> Gebäuden</div></div>
 <div class="panel" id="legend"><div class="lbl">Baujahr</div><div class="bar"></div>
   <div class="ticks"><span>1826</span><span>1900</span><span>1950</span><span>1980</span><span>2025</span></div>
@@ -71,13 +71,14 @@
     <span><i style="border-top:2px solid #3a6fa0"></i>Dornbirner Ache</span>
     <span><i style="border-top:2px solid #3b6ea5;opacity:.7"></i>Mühlbäche</span>
     <span><i style="border-top:2px dashed #6b7280"></i>Bahn</span>
+    <span><i style="border-top:2px solid #586070"></i>Straßen</span>
   </div></div>
 <div class="panel" id="sources"></div>
 <div class="panel" id="controls">
   <svg id="spark" preserveAspectRatio="none"></svg>
   <div id="row">
     <button id="play" title="Abspielen / Pause">▮▮</button>
-    <input id="slider" type="range" min="1826" max="2025" value="1826" step="1"/>
+    <input id="slider" type="range" min="1810" max="2025" value="1810" step="1"/>
     <span id="speed" title="Geschwindigkeit">1×</span>
   </div>
 </div>
@@ -89,7 +90,7 @@
 </svg></div>
 
 <script>
-const YMIN=1826, YMAX=2025;
+const YMIN=1826, YMAX=2025, YSTART=1810;   // YSTART = Vorlauf: leere Buehne vor dem ersten Baujahr (1826)
 // magma-artige Farbrampe nach Baujahr
 const COLOR=['interpolate',['linear'],['get','built_from'],
   1826,'#440154', 1875,'#414487', 1915,'#2a788e', 1955,'#22a884', 1985,'#7ad151', 2010,'#bddf26', 2025,'#fde725'];
@@ -103,6 +104,7 @@ function epochColor(y){
 }
 // gleiche Rampe, aber Richtung Weiss aufgehellt -> die grosse Jahreszahl bleibt auf Dunkel lesbar
 function yearColor(y){
+  y=Math.max(YMIN,Math.min(YMAX,y));   // Farbe nur aus dem Datenbereich (Vorlauf -> 1826er Farbe)
   let a=RAMP[0],b=RAMP[RAMP.length-1];
   for(let i=0;i<RAMP.length-1;i++){ if(y>=RAMP[i][0]&&y<=RAMP[i+1][0]){a=RAMP[i];b=RAMP[i+1];break;} }
   const t=(y-a[0])/((b[0]-a[0])||1), mix=0;   // 0 = exakt die Haeuserfarbe; >0 = Richtung Weiss aufhellen
@@ -116,7 +118,7 @@ const map=new maplibregl.Map({
   center:[9.742,47.412], zoom:13.4, pitch:0, minZoom:11, maxZoom:17
 });
 
-let year=YMIN, playing=true, last=null, speed=1;   // Jahre pro Sekunde-Faktor
+let year=YSTART, playing=true, last=null, speed=1;   // Jahre pro Sekunde-Faktor
 const SPEEDS=[0.5,1,2,4];
 const PACE_MULT=3.2;   // Gesamt-Tempo (groesser = schneller); skaliert die ganze Kurve (~8 s gesamt bei 1x)
 // Tempo-Kurve: Jahre/Sekunde je nach Jahr. Schnell durch die leere Frühzeit,
@@ -173,9 +175,9 @@ function expireFlashes(){
 }
 
 function setYear(y, doFlash){
-  year=Math.max(YMIN,Math.min(YMAX,y));
+  year=Math.max(YSTART,Math.min(YMAX,y));
   const yi=Math.floor(year);
-  const yEl=document.getElementById('year'); yEl.textContent=yi; yEl.style.color=yearColor(year);
+  const yEl=document.getElementById('year'); yEl.textContent=(yi<YMIN?'—':yi); yEl.style.color=yearColor(yi);
   document.getElementById('slider').value=yi;
   reveal(yi, doFlash);
   document.getElementById('cnum').textContent=shownCount.toLocaleString('de-DE');
@@ -184,11 +186,11 @@ function setYear(y, doFlash){
 
 // Karte komplett leeren (Start / Neustart) -> auch die 1826er wachsen aus dem Nichts rein
 function resetEmpty(){
-  reveal(YMIN-1, false);     // alles ausblenden (rueckwaerts)
+  reveal(YSTART-1, false);   // alles ausblenden (rueckwaerts), bis vor den Vorlauf
   flashQueue.length=0;
-  year=YMIN; last=null;
-  const yEl=document.getElementById('year'); yEl.textContent=YMIN; yEl.style.color=yearColor(YMIN);
-  document.getElementById('slider').value=YMIN;
+  year=YSTART; last=null;
+  const yEl=document.getElementById('year'); yEl.textContent='—'; yEl.style.color=yearColor(YMIN);
+  document.getElementById('slider').value=YSTART;
   document.getElementById('cnum').textContent='0';
   updateSpark();
 }
@@ -229,7 +231,7 @@ function buildSources(){
 function buildSpark(){
   const svg=document.getElementById('spark');
   const W=svg.clientWidth||560, H=svg.clientHeight||40, pad=3, baseY=H-11;
-  const X=y=>pad+(y-YMIN)/(YMAX-YMIN)*(W-2*pad);
+  const X=y=>pad+(y-YSTART)/(YMAX-YSTART)*(W-2*pad);
   const years=[...idsByYear.keys()].sort((a,b)=>a-b);
   const maxC=Math.max(...years.map(y=>idsByYear.get(y).length));
   let s='';
@@ -247,7 +249,7 @@ function buildSpark(){
 }
 function updateSpark(){
   const svg=document.getElementById('spark'); if(!svg||!svg.firstChild) return;
-  const W=svg.clientWidth||560, pad=3, px=pad+(year-YMIN)/(YMAX-YMIN)*(W-2*pad);
+  const W=svg.clientWidth||560, pad=3, px=pad+(year-YSTART)/(YMAX-YSTART)*(W-2*pad);
   const head=svg.querySelector('#spark-head'); if(head){ head.setAttribute('x1',px); head.setAttribute('x2',px); }
   svg.querySelectorAll('rect.sb').forEach(r=>{ r.setAttribute('opacity', (+r.getAttribute('data-y')<=year)?'0.72':'0.15'); });
 }
@@ -265,7 +267,7 @@ async function init(){
   try{
     const [gj, ctx] = await Promise.all([
       fetch('dornbirn_wachstum.geojson').then(r=>r.json()),
-      fetch('context_faded.geojson').then(r=>r.json()).catch(()=>null)
+      fetch('context_streets.geojson').then(r=>r.json()).catch(()=>null)
     ]);
     total=gj.features.length;
     // Rand-Feather: Gebaeude nahe der Datengrenze sanft auffaden -> loest den harten Rechteck-Rand auf
@@ -284,6 +286,8 @@ async function init(){
     // Kontext ZUERST (liegt unter den Gebaeuden)
     if(ctx){
       map.addSource('ctx',{type:'geojson',data:ctx});
+      map.addLayer({id:'ctx-street',type:'line',source:'ctx',filter:['==',['get','kind'],'street'],
+        layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#586070','line-width':0.6,'line-opacity':['*',0.16,['get','op']],'line-blur':0.25}});
       map.addLayer({id:'ctx-rail',type:'line',source:'ctx',filter:['==',['get','kind'],'rail'],
         layout:{'line-cap':'round'},paint:{'line-color':'#6b7280','line-width':1.0,'line-opacity':['*',0.30,['get','op']],'line-dasharray':[2.5,2.5],'line-blur':0.4}});
       map.addLayer({id:'ctx-canal',type:'line',source:'ctx',filter:['==',['get','kind'],'canal'],
@@ -304,11 +308,17 @@ async function init(){
     }});
     // Variante A2: KEIN Aufleucht-Glow — Gebaeude erscheinen nur durch Opacity-Anstieg (fill-opacity-transition oben)
     map.fitBounds(bounds(gj.features),{padding:34,duration:0});
+    map.setZoom(map.getZoom()-0.45);   // etwas rauszoomen -> Stadt kleiner, mehr Rand
+    { const cc=map.getContainer(); map.setCenter(map.unproject([cc.clientWidth/2, cc.clientHeight/2 + cc.clientHeight*0.06])); }   // Stadt etwas nach oben schieben
     document.getElementById('cnt-total').textContent=total.toLocaleString('de-DE');
     ready=true;
     document.getElementById('loading').style.display='none';
     buildSpark(); buildSources();
-    resetEmpty(); requestAnimationFrame(frame);   // leer starten, dann waechst alles rein
+    resetEmpty();                                     // leere Karte (nur Kontext/Straßen)
+    // INTRO: ~1,2 s leere Buehne (KEIN Zoom — sonst verdecken die Cards zu viel), DANN waechst die Siedlung rein
+    playing=false;
+    setTimeout(()=>{ last=null; playing=true; document.getElementById('play').textContent='▮▮'; }, 1200);
+    requestAnimationFrame(frame);
   }catch(e){ document.getElementById('loading').textContent='Fehler: '+e.message; console.error(e); }
 }
 if(map.isStyleLoaded()) init(); else map.on('load', init);
