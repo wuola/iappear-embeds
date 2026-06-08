@@ -41,10 +41,11 @@
   #legend .lbl{font-size:11px;color:var(--muted);margin-bottom:6px;letter-spacing:.4px;text-transform:uppercase}
   #legend .ctx{margin-top:10px;font-size:10px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
   #legend .ctx i{display:inline-block;width:14px;height:0;vertical-align:middle;margin-right:5px}
-  #sources{left:26px;top:200px;max-width:300px;background:rgba(18,20,28,.72);backdrop-filter:blur(8px);
+  #sources{left:26px;top:200px;max-width:300px;max-height:calc(100vh - 355px);overflow-y:auto;
+           background:rgba(18,20,28,.72);backdrop-filter:blur(8px);
            padding:10px 13px;border-radius:12px;border:1px solid rgba(255,255,255,.07);pointer-events:auto}
   #sources .lbl{font-size:11px;color:var(--muted);margin-bottom:7px;letter-spacing:.4px;text-transform:uppercase}
-  #sources .row{display:flex;align-items:center;gap:8px;font-size:10.5px;line-height:1.62}
+  #sources .row{display:flex;align-items:center;gap:8px;font-size:10px;line-height:1.45}
   #sources .row .sw{width:10px;height:10px;border-radius:2px;flex:0 0 auto}
   #sources .row .yr{font-variant-numeric:tabular-nums;font-weight:600;color:var(--fg);width:30px;flex:0 0 auto}
   #sources .row .src{color:var(--muted)}
@@ -75,7 +76,7 @@
     #slider{width:auto;flex:1 1 auto;max-width:none}
     #legend{order:5;margin:8px 16px}
     #legend .bar{width:100%}
-    #sources{order:6;margin:4px 16px 6px}
+    #sources{order:6;margin:4px 16px 6px;max-height:none;overflow:visible}
     .credit{order:7;position:static;right:auto;bottom:auto;text-align:left;margin:4px 16px}
     #logo{order:8;position:static;right:auto;bottom:auto;margin:6px 16px 22px;opacity:.85}
   }
