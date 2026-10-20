@@ -149,11 +149,14 @@ function buildStats() {
 
 /* --- MAP --- */
 const map = L.map('map', {scrollWheelZoom:true, tap:true});
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
-  attribution:'© OpenStreetMap · CARTO',
+// CARTO verlangt seit Sept. 2026 einen API-Key (sonst "API KEY REQUIRED" auf den Kacheln).
+// Key HIER eintragen — gratis via https://carto.com/basemaps/apikey/
+var CARTO_KEY = 'cb1_4pk0_1_2375bf984f9f4cd2e81a142c';
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_nolabels/{z}/{x}/{y}{r}.png?key=' + CARTO_KEY, {
+  attribution:'© OpenStreetMap © CARTO',
   subdomains:'abcd', maxZoom:19
 }).addTo(map);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_only_labels/{z}/{x}/{y}{r}.png?key=' + CARTO_KEY, {
   subdomains:'abcd', maxZoom:19, pane:'shadowPane'
 }).addTo(map);
 
